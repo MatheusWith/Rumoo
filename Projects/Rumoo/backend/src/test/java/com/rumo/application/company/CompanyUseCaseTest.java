@@ -109,7 +109,7 @@ class CompanyUseCaseTest {
     }
 
     @Test
-    void shouldDeleteCompany() {
+    void shouldDeactivateCompany() {
         Company company = Company.create("Rumoo SA", "12345678000199");
         company.setId(1L);
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
@@ -117,7 +117,7 @@ class CompanyUseCaseTest {
         DeleteCompanyUseCase useCase = new DeleteCompanyUseCase(companyRepository);
         useCase.execute(1L);
 
-        verify(companyRepository).softDelete(1L);
+        verify(companyRepository).deactivate(1L);
     }
 
     @Test

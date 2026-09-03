@@ -13,5 +13,7 @@ public interface ICompanyRepository {
 
     long count();
 
-    void softDelete(Long id);
+    void deactivate(Long id);
+
+    void delete(Long id);
 }

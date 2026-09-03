@@ -30,7 +30,6 @@ class CompanyRepositoryTest {
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getName()).isEqualTo("Rumoo SA");
         assertThat(saved.isActive()).isTrue();
-        assertThat(saved.getDeletedAt()).isNull();
 
         Optional<Company> found = companyRepository.findById(saved.getId());
         assertThat(found).isPresent();
@@ -38,25 +37,49 @@ class CompanyRepositoryTest {
     }
 
     @Test
-    void shouldSoftDeleteCompany() {
+    void shouldDeactivateCompany() {
         Company company = Company.create("Rumoo SA", "12345678000198");
         Company saved = companyRepository.save(company);
 
-        companyRepository.softDelete(saved.getId());
+        companyRepository.deactivate(saved.getId());
 
         assertThat(companyRepository.findById(saved.getId())).isEmpty();
     }
 
     @Test
-    void softDeleteNonexistentIdShouldNotThrow() {
-        companyRepository.softDelete(99999L);
+    void deactivateNonexistentIdShouldNotThrow() {
+        companyRepository.deactivate(99999L);
+    }
+
+    @Test
+    void shouldDeleteCompanyPermanently() {
+        Company company = Company.create("Rumoo SA", "12345678000197");
+        Company saved = companyRepository.save(company);
+
+        companyRepository.delete(saved.getId());
+
+        assertThat(companyRepository.findById(saved.getId())).isEmpty();
+    }
+
+    @Test
+    void shouldNotFindDeactivatedCompanyInList() {
+        Company active = Company.create("Active", "12345678000101");
+        Company deactivated = Company.create("Deactivated", "12345678000102");
+        companyRepository.save(active);
+        Company savedDeactivated = companyRepository.save(deactivated);
+
+        companyRepository.deactivate(savedDeactivated.getId());
+
+        List<Company> page = companyRepository.findAll(0, 10);
+        assertThat(page).hasSize(1);
+        assertThat(page.get(0).getName()).isEqualTo("Active");
     }
 
     @Test
     void shouldListAllWithPagination() {
-        companyRepository.save(Company.create("Company A", "12345678000101"));
-        companyRepository.save(Company.create("Company B", "12345678000102"));
-        companyRepository.save(Company.create("Company C", "12345678000103"));
+        companyRepository.save(Company.create("Company A", "12345678000103"));
+        companyRepository.save(Company.create("Company B", "12345678000104"));
+        companyRepository.save(Company.create("Company C", "12345678000105"));
 
         List<Company> page = companyRepository.findAll(0, 2);
 
