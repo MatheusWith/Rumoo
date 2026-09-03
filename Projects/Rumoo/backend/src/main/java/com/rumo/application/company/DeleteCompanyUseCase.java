@@ -18,6 +18,6 @@ public class DeleteCompanyUseCase {
     public void execute(Long id) {
         companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        companyRepository.softDelete(id);
+        companyRepository.deactivate(id);
     }
 }
