@@ -239,6 +239,58 @@ docs: initial project documentation
 chore(backend): add Maven Wrapper
 ```
 
+### Pull Request Convention
+
+Format:
+```
+<type>(<scope>): <short description>
+
+<bullet list of what changed>
+
+Closes #<issue-number>
+```
+
+**Title:** same as commit message — `<type>(<scope>): <description>`
+
+**Body — required sections:**
+- **What** — 1–3 bullet points summarizing the change
+- **Why** (optional) — only if the motivation isn't obvious from the linked issue
+- **Closes** — always link the issue/ticket that triggered the work
+
+**Rules:**
+- One feature/fix per PR — don't bundle unrelated changes
+- Title uses imperative mood, same as commits
+- Body is plain Markdown, no YAML front-matter
+- PR targets `dev`, never `main`
+- Squash-merge into `dev` (keeps history clean)
+
+**Examples:**
+```
+feat(backend): add Company REST API
+
+- Implements full CRUD for Company entity with soft delete
+- Adds pagination, validation, and error handling
+- Follows hexagonal architecture and UseCase pattern
+
+Closes #12
+```
+```
+fix(backend): fix soft delete not clearing JPA cache
+
+- Adds entityManager.clear() after @Modifying query
+- Adds regression test for softDelete on nonexistent ID
+
+Closes #34
+```
+```
+docs: add commit and PR conventions to AGENTS.md
+
+- Documents Conventional Commits format with types, scopes, and examples
+- Adds Pull Request format with title, body, and linking rules
+
+Closes #45
+```
+
 ### Dependency Pinning
 
 - **No caret (`^`), no tilde (`~`)** — exact versions only
