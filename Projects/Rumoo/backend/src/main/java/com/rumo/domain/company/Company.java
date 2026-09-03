@@ -1,60 +1,40 @@
 package com.rumo.domain.company;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Company {
 
+    @Setter
     private Long id;
+
     private String nome;
     private String cnpj;
+
+    @Setter
     private boolean ativa;
+
     private LocalDateTime deletadoEm;
 
-    public Company(Long id, String nome, String cnpj, boolean ativa, LocalDateTime deletadoEm) {
-        this.id = id;
+    public static Company create(String nome, String cnpj) {
+        return new Company(null, nome, cnpj, true, null);
+    }
+
+    public Company update(String nome, String cnpj) {
         this.nome = nome;
         this.cnpj = cnpj;
-        this.ativa = ativa;
-        this.deletadoEm = deletadoEm;
+        return this;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public boolean isAtiva() {
-        return ativa;
-    }
-
-    public void setAtiva(boolean ativa) {
-        this.ativa = ativa;
-    }
-
-    public LocalDateTime getDeletadoEm() {
-        return deletadoEm;
-    }
-
-    public void setDeletadoEm(LocalDateTime deletadoEm) {
-        this.deletadoEm = deletadoEm;
+    public Company softDelete() {
+        this.deletadoEm = LocalDateTime.now();
+        return this;
     }
 }
