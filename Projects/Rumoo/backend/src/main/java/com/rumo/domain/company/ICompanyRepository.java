@@ -11,5 +11,9 @@ public interface ICompanyRepository {
 
     List<Company> findAll();
 
+    List<Company> findAll(int offset, int limit);
+
+    long count();
+
     void delete(Long id);
 }

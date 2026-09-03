@@ -40,6 +40,18 @@ public class CompanyRepository implements ICompanyRepository {
     }
 
     @Override
+    public List<Company> findAll(int offset, int limit) {
+        return jpaRepository.findActive(offset, limit).stream()
+                .map(CompanyMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.countActive();
+    }
+
+    @Override
     public void delete(Long id) {
         jpaRepository.findById(id).ifPresent(entity -> {
             entity.setDeletadoEm(LocalDateTime.now());
