@@ -1,0 +1,8 @@
+# AI-generated artifacts — never push to remote
+AGENTS.md
+.scratch/
+plans/
+adr/
+ADR.md
+CONTEXT.md
+CONTEXT-MAP.md
