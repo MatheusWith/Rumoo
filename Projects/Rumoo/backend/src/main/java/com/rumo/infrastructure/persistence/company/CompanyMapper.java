@@ -13,7 +13,6 @@ public class CompanyMapper {
                 .name(company.getName())
                 .cnpj(company.getCnpj())
                 .active(company.isActive())
-                .deletedAt(company.getDeletedAt())
                 .build();
     }
 
@@ -22,8 +21,7 @@ public class CompanyMapper {
                 entity.getId(),
                 entity.getName(),
                 entity.getCnpj(),
-                entity.isActive(),
-                entity.getDeletedAt()
+                entity.isActive()
         );
     }
 }
