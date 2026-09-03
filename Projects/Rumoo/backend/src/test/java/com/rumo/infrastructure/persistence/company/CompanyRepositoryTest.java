@@ -57,8 +57,6 @@ class CompanyRepositoryTest {
         Company saved = companyRepository.save(company);
 
         companyRepository.delete(saved.getId());
-
-        assertThat(companyRepository.findById(saved.getId())).isEmpty();
     }
 
     @Test

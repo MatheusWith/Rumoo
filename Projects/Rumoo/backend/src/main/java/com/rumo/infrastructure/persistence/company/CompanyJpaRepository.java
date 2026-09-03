@@ -16,8 +16,4 @@ public interface CompanyJpaRepository extends JpaRepository<CompanyEntity, Long>
     @Modifying
     @Query("UPDATE CompanyEntity c SET c.active = :active WHERE c.id = :id")
     void updateActiveById(@Param("id") Long id, @Param("active") boolean active);
-
-    @Modifying
-    @Query(value = "DELETE FROM companies WHERE id = :id", nativeQuery = true)
-    void deleteByIdNative(@Param("id") Long id);
 }

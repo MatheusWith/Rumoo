@@ -58,7 +58,7 @@ public class CompanyRepository implements ICompanyRepository {
     @Override
     @Transactional
     public void delete(Long id) {
-        jpaRepository.deleteByIdNative(id);
+        jpaRepository.deleteById(id);
         entityManager.clear();
     }
 }
