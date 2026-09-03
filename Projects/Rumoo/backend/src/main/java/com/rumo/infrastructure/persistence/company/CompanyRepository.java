@@ -2,9 +2,9 @@ package com.rumo.infrastructure.persistence.company;
 
 import com.rumo.domain.company.Company;
 import com.rumo.domain.company.ICompanyRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,30 +32,24 @@ public class CompanyRepository implements ICompanyRepository {
     }
 
     @Override
-    public List<Company> findAll() {
-        return jpaRepository.findAll().stream()
-                .filter(e -> e.getDeletadoEm() == null)
-                .map(CompanyMapper::toDomain)
-                .toList();
-    }
-
-    @Override
-    public List<Company> findAll(int offset, int limit) {
-        return jpaRepository.findActive(offset, limit).stream()
+    public List<Company> findAll(int page, int size) {
+        return jpaRepository.findAllByDeletadoEmIsNull(PageRequest.of(page, size))
+                .stream()
                 .map(CompanyMapper::toDomain)
                 .toList();
     }
 
     @Override
     public long count() {
-        return jpaRepository.countActive();
+        return jpaRepository.countByDeletadoEmIsNull();
     }
 
     @Override
-    public void delete(Long id) {
+    public void softDelete(Long id) {
         jpaRepository.findById(id).ifPresent(entity -> {
-            entity.setDeletadoEm(LocalDateTime.now());
-            jpaRepository.save(entity);
+            Company domain = CompanyMapper.toDomain(entity);
+            domain.softDelete();
+            jpaRepository.save(CompanyMapper.toEntity(domain));
         });
     }
 }

@@ -9,11 +9,9 @@ public interface ICompanyRepository {
 
     Optional<Company> findById(Long id);
 
-    List<Company> findAll();
-
-    List<Company> findAll(int offset, int limit);
+    List<Company> findAll(int page, int size);
 
     long count();
 
-    void delete(Long id);
+    void softDelete(Long id);
 }

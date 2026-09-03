@@ -114,4 +114,25 @@ class CompanyControllerTest {
         mockMvc.perform(delete("/api/v1/companies/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldReturn404WhenUpdateNotFound() throws Exception {
+        CompanyRequest request = new CompanyRequest("New Name", "12345678000199");
+        when(companyService.update(eq(99L), any(CompanyRequest.class)))
+                .thenThrow(new CompanyNotFoundException(99L));
+
+        mockMvc.perform(put("/api/v1/companies/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldReturn404WhenDeleteNotFound() throws Exception {
+        org.mockito.Mockito.doThrow(new CompanyNotFoundException(99L))
+                .when(companyService).delete(99L);
+
+        mockMvc.perform(delete("/api/v1/companies/99"))
+                .andExpect(status().isNotFound());
+    }
 }
