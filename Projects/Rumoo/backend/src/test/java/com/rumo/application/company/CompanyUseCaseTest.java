@@ -4,8 +4,8 @@ import com.rumo.application.company.dto.CompanyPage;
 import com.rumo.application.company.dto.CompanyRequest;
 import com.rumo.application.company.dto.CompanyResponse;
 import com.rumo.domain.company.Company;
+import com.rumo.domain.company.CompanyNotFoundException;
 import com.rumo.domain.company.ICompanyRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,17 +21,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CompanyServiceTest {
+class CompanyUseCaseTest {
 
     @Mock
     private ICompanyRepository companyRepository;
-
-    private CompanyService companyService;
-
-    @BeforeEach
-    void setUp() {
-        companyService = new CompanyService(companyRepository);
-    }
 
     @Test
     void shouldCreateCompany() {
@@ -40,12 +33,13 @@ class CompanyServiceTest {
         saved.setId(1L);
         when(companyRepository.save(any(Company.class))).thenReturn(saved);
 
-        CompanyResponse response = companyService.create(request);
+        CreateCompanyUseCase useCase = new CreateCompanyUseCase(companyRepository);
+        CompanyResponse response = useCase.execute(request);
 
         assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.nome()).isEqualTo("Rumoo SA");
+        assertThat(response.name()).isEqualTo("Rumoo SA");
         assertThat(response.cnpj()).isEqualTo("12345678000199");
-        assertThat(response.ativa()).isTrue();
+        assertThat(response.active()).isTrue();
     }
 
     @Test
@@ -54,17 +48,19 @@ class CompanyServiceTest {
         company.setId(1L);
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
 
-        CompanyResponse response = companyService.findById(1L);
+        FindCompanyByIdUseCase useCase = new FindCompanyByIdUseCase(companyRepository);
+        CompanyResponse response = useCase.execute(1L);
 
         assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.nome()).isEqualTo("Rumoo SA");
+        assertThat(response.name()).isEqualTo("Rumoo SA");
     }
 
     @Test
     void shouldThrowWhenNotFound() {
         when(companyRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> companyService.findById(99L))
+        FindCompanyByIdUseCase useCase = new FindCompanyByIdUseCase(companyRepository);
+        assertThatThrownBy(() -> useCase.execute(99L))
                 .isInstanceOf(CompanyNotFoundException.class)
                 .hasMessageContaining("99");
     }
@@ -78,7 +74,8 @@ class CompanyServiceTest {
         when(companyRepository.count()).thenReturn(2L);
         when(companyRepository.findAll(0, 20)).thenReturn(List.of(c1, c2));
 
-        CompanyPage page = companyService.findAll(0, 20);
+        ListCompaniesUseCase useCase = new ListCompaniesUseCase(companyRepository);
+        CompanyPage page = useCase.execute(0, 20);
 
         assertThat(page.content()).hasSize(2);
         assertThat(page.totalElements()).isEqualTo(2);
@@ -93,9 +90,10 @@ class CompanyServiceTest {
         when(companyRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(companyRepository.save(any(Company.class))).thenAnswer(i -> i.getArgument(0));
 
-        CompanyResponse response = companyService.update(1L, request);
+        UpdateCompanyUseCase useCase = new UpdateCompanyUseCase(companyRepository);
+        CompanyResponse response = useCase.execute(1L, request);
 
-        assertThat(response.nome()).isEqualTo("New Name");
+        assertThat(response.name()).isEqualTo("New Name");
         assertThat(response.cnpj()).isEqualTo("12345678000199");
     }
 
@@ -104,7 +102,8 @@ class CompanyServiceTest {
         when(companyRepository.findById(99L)).thenReturn(Optional.empty());
         CompanyRequest request = new CompanyRequest("New Name", "12345678000199");
 
-        assertThatThrownBy(() -> companyService.update(99L, request))
+        UpdateCompanyUseCase useCase = new UpdateCompanyUseCase(companyRepository);
+        assertThatThrownBy(() -> useCase.execute(99L, request))
                 .isInstanceOf(CompanyNotFoundException.class)
                 .hasMessageContaining("99");
     }
@@ -115,7 +114,8 @@ class CompanyServiceTest {
         company.setId(1L);
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
 
-        companyService.delete(1L);
+        DeleteCompanyUseCase useCase = new DeleteCompanyUseCase(companyRepository);
+        useCase.execute(1L);
 
         verify(companyRepository).softDelete(1L);
     }
@@ -124,7 +124,8 @@ class CompanyServiceTest {
     void shouldThrowWhenDeleteNotFound() {
         when(companyRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> companyService.delete(99L))
+        DeleteCompanyUseCase useCase = new DeleteCompanyUseCase(companyRepository);
+        assertThatThrownBy(() -> useCase.execute(99L))
                 .isInstanceOf(CompanyNotFoundException.class)
                 .hasMessageContaining("99");
     }

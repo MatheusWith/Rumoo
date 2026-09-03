@@ -28,13 +28,13 @@ public class CompanyEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String nome;
+    private String name;
 
     @Column(nullable = false, unique = true)
     private String cnpj;
 
     @Column(nullable = false)
-    private boolean ativa;
+    private boolean active;
 
-    private LocalDateTime deletadoEm;
+    private LocalDateTime deletedAt;
 }
