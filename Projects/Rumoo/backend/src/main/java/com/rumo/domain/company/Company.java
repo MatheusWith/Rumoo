@@ -15,26 +15,25 @@ public class Company {
     @Setter
     private Long id;
 
-    private String nome;
+    private String name;
     private String cnpj;
 
     @Setter
-    private boolean ativa;
+    private boolean active;
 
-    private LocalDateTime deletadoEm;
+    private LocalDateTime deletedAt;
 
-    public static Company create(String nome, String cnpj) {
-        return new Company(null, nome, cnpj, true, null);
+    public static Company create(String name, String cnpj) {
+        return new Company(null, name, cnpj, true, null);
     }
 
-    public Company update(String nome, String cnpj) {
-        this.nome = nome;
+    public Company update(String name, String cnpj) {
+        this.name = name;
         this.cnpj = cnpj;
         return this;
     }
 
-    public Company softDelete() {
-        this.deletadoEm = LocalDateTime.now();
-        return this;
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

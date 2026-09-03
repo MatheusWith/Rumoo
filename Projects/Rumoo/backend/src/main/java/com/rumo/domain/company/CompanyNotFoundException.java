@@ -1,4 +1,4 @@
-package com.rumo.application.company;
+package com.rumo.domain.company;
 
 public class CompanyNotFoundException extends RuntimeException {
 

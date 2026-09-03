@@ -28,9 +28,9 @@ class CompanyRepositoryTest {
         Company saved = companyRepository.save(company);
 
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getNome()).isEqualTo("Rumoo SA");
-        assertThat(saved.isAtiva()).isTrue();
-        assertThat(saved.getDeletadoEm()).isNull();
+        assertThat(saved.getName()).isEqualTo("Rumoo SA");
+        assertThat(saved.isActive()).isTrue();
+        assertThat(saved.getDeletedAt()).isNull();
 
         Optional<Company> found = companyRepository.findById(saved.getId());
         assertThat(found).isPresent();
@@ -45,6 +45,11 @@ class CompanyRepositoryTest {
         companyRepository.softDelete(saved.getId());
 
         assertThat(companyRepository.findById(saved.getId())).isEmpty();
+    }
+
+    @Test
+    void softDeleteNonexistentIdShouldNotThrow() {
+        companyRepository.softDelete(99999L);
     }
 
     @Test

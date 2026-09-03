@@ -10,20 +10,20 @@ public class CompanyMapper {
     public static CompanyEntity toEntity(Company company) {
         return CompanyEntity.builder()
                 .id(company.getId())
-                .nome(company.getNome())
+                .name(company.getName())
                 .cnpj(company.getCnpj())
-                .ativa(company.isAtiva())
-                .deletadoEm(company.getDeletadoEm())
+                .active(company.isActive())
+                .deletedAt(company.getDeletedAt())
                 .build();
     }
 
     public static Company toDomain(CompanyEntity entity) {
         return new Company(
                 entity.getId(),
-                entity.getNome(),
+                entity.getName(),
                 entity.getCnpj(),
-                entity.isAtiva(),
-                entity.getDeletadoEm()
+                entity.isActive(),
+                entity.getDeletedAt()
         );
     }
 }

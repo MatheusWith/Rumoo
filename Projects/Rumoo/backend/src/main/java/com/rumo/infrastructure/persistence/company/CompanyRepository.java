@@ -2,8 +2,10 @@ package com.rumo.infrastructure.persistence.company;
 
 import com.rumo.domain.company.Company;
 import com.rumo.domain.company.ICompanyRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,9 +14,11 @@ import java.util.Optional;
 public class CompanyRepository implements ICompanyRepository {
 
     private final CompanyJpaRepository jpaRepository;
+    private final EntityManager entityManager;
 
-    public CompanyRepository(CompanyJpaRepository jpaRepository) {
+    public CompanyRepository(CompanyJpaRepository jpaRepository, EntityManager entityManager) {
         this.jpaRepository = jpaRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -27,13 +31,13 @@ public class CompanyRepository implements ICompanyRepository {
     @Override
     public Optional<Company> findById(Long id) {
         return jpaRepository.findById(id)
-                .filter(e -> e.getDeletadoEm() == null)
+                .filter(e -> e.getDeletedAt() == null)
                 .map(CompanyMapper::toDomain);
     }
 
     @Override
     public List<Company> findAll(int page, int size) {
-        return jpaRepository.findAllByDeletadoEmIsNull(PageRequest.of(page, size))
+        return jpaRepository.findAllByDeletedAtIsNull(PageRequest.of(page, size))
                 .stream()
                 .map(CompanyMapper::toDomain)
                 .toList();
@@ -41,15 +45,13 @@ public class CompanyRepository implements ICompanyRepository {
 
     @Override
     public long count() {
-        return jpaRepository.countByDeletadoEmIsNull();
+        return jpaRepository.countByDeletedAtIsNull();
     }
 
     @Override
+    @Transactional
     public void softDelete(Long id) {
-        jpaRepository.findById(id).ifPresent(entity -> {
-            Company domain = CompanyMapper.toDomain(entity);
-            domain.softDelete();
-            jpaRepository.save(CompanyMapper.toEntity(domain));
-        });
+        jpaRepository.softDeleteById(id);
+        entityManager.clear();
     }
 }
