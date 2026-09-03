@@ -4,16 +4,16 @@ import com.rumo.domain.company.Company;
 
 public record CompanyResponse(
         Long id,
-        String nome,
+        String name,
         String cnpj,
-        boolean ativa
+        boolean active
 ) {
     public static CompanyResponse from(Company company) {
         return new CompanyResponse(
                 company.getId(),
-                company.getNome(),
+                company.getName(),
                 company.getCnpj(),
-                company.isAtiva()
+                company.isActive()
         );
     }
 }
