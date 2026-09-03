@@ -36,7 +36,8 @@ class CompanyServiceTest {
     @Test
     void shouldCreateCompany() {
         CompanyRequest request = new CompanyRequest("Rumoo SA", "12345678000199");
-        Company saved = new Company(1L, "Rumoo SA", "12345678000199", true, null);
+        Company saved = Company.create("Rumoo SA", "12345678000199");
+        saved.setId(1L);
         when(companyRepository.save(any(Company.class))).thenReturn(saved);
 
         CompanyResponse response = companyService.create(request);
@@ -49,7 +50,8 @@ class CompanyServiceTest {
 
     @Test
     void shouldFindById() {
-        Company company = new Company(1L, "Rumoo SA", "12345678000199", true, null);
+        Company company = Company.create("Rumoo SA", "12345678000199");
+        company.setId(1L);
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
 
         CompanyResponse response = companyService.findById(1L);
@@ -69,8 +71,10 @@ class CompanyServiceTest {
 
     @Test
     void shouldFindAllPaginated() {
-        Company c1 = new Company(1L, "Company A", "12345678000101", true, null);
-        Company c2 = new Company(2L, "Company B", "12345678000102", true, null);
+        Company c1 = Company.create("Company A", "12345678000101");
+        c1.setId(1L);
+        Company c2 = Company.create("Company B", "12345678000102");
+        c2.setId(2L);
         when(companyRepository.count()).thenReturn(2L);
         when(companyRepository.findAll(0, 20)).thenReturn(List.of(c1, c2));
 
@@ -83,7 +87,8 @@ class CompanyServiceTest {
 
     @Test
     void shouldUpdateCompany() {
-        Company existing = new Company(1L, "Old Name", "12345678000199", true, null);
+        Company existing = Company.create("Old Name", "12345678000199");
+        existing.setId(1L);
         CompanyRequest request = new CompanyRequest("New Name", "12345678000199");
         when(companyRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(companyRepository.save(any(Company.class))).thenAnswer(i -> i.getArgument(0));
@@ -95,12 +100,32 @@ class CompanyServiceTest {
     }
 
     @Test
+    void shouldThrowWhenUpdateNotFound() {
+        when(companyRepository.findById(99L)).thenReturn(Optional.empty());
+        CompanyRequest request = new CompanyRequest("New Name", "12345678000199");
+
+        assertThatThrownBy(() -> companyService.update(99L, request))
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
     void shouldDeleteCompany() {
-        Company company = new Company(1L, "Rumoo SA", "12345678000199", true, null);
+        Company company = Company.create("Rumoo SA", "12345678000199");
+        company.setId(1L);
         when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
 
         companyService.delete(1L);
 
-        verify(companyRepository).delete(1L);
+        verify(companyRepository).softDelete(1L);
+    }
+
+    @Test
+    void shouldThrowWhenDeleteNotFound() {
+        when(companyRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> companyService.delete(99L))
+                .isInstanceOf(CompanyNotFoundException.class)
+                .hasMessageContaining("99");
     }
 }
