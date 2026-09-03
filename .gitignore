@@ -1,0 +1,9 @@
+# Local planning and scratch files - never push to remote
+.scratch/
+plans/
+adr/
+ADR.md
+
+# Tooling directories
+.codegraph/
+.opencode/
