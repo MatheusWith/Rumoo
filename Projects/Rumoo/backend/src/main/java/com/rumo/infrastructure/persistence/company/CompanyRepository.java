@@ -31,13 +31,13 @@ public class CompanyRepository implements ICompanyRepository {
     @Override
     public Optional<Company> findById(Long id) {
         return jpaRepository.findById(id)
-                .filter(e -> e.getDeletedAt() == null)
+                .filter(CompanyEntity::isActive)
                 .map(CompanyMapper::toDomain);
     }
 
     @Override
     public List<Company> findAll(int page, int size) {
-        return jpaRepository.findAllByDeletedAtIsNull(PageRequest.of(page, size))
+        return jpaRepository.findAllByActiveTrue(PageRequest.of(page, size))
                 .stream()
                 .map(CompanyMapper::toDomain)
                 .toList();
@@ -45,13 +45,20 @@ public class CompanyRepository implements ICompanyRepository {
 
     @Override
     public long count() {
-        return jpaRepository.countByDeletedAtIsNull();
+        return jpaRepository.countByActiveTrue();
     }
 
     @Override
     @Transactional
-    public void softDelete(Long id) {
-        jpaRepository.softDeleteById(id);
+    public void deactivate(Long id) {
+        jpaRepository.updateActiveById(id, false);
+        entityManager.clear();
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        jpaRepository.deleteByIdNative(id);
         entityManager.clear();
     }
 }

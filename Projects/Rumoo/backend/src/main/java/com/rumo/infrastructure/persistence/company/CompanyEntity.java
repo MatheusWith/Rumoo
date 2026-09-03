@@ -12,8 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "companies")
 @Getter
@@ -35,6 +33,4 @@ public class CompanyEntity {
 
     @Column(nullable = false)
     private boolean active;
-
-    private LocalDateTime deletedAt;
 }
