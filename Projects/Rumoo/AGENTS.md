@@ -198,9 +198,46 @@ Target stack (planned):
 
 - Three-tier branching: `main` → `dev` → `feature/*`
 - Feature branches target `dev`, never `main`
-- Conventional commits: `feat(scope): description`
 - Never push directly to `main` or `dev`
 - Configure and respect **pre-commit** and **pre-push** git hooks
+
+### Commit Message Convention (Conventional Commits)
+
+Format: `<type>(<scope>): <description>`
+
+**Types:**
+- `feat` — new feature
+- `fix` — bug fix
+- `refactor` — code change that neither fixes a bug nor adds a feature
+- `test` — adding or updating tests
+- `docs` — documentation only
+- `chore` — build process, tooling, dependencies
+- `style` — formatting, semicolons, etc. (no logic change)
+- `perf` — performance improvement
+- `ci` — CI/CD configuration
+
+**Scopes:**
+- `backend` — backend changes
+- `frontend` — frontend changes
+- `infra` — infrastructure / deployment
+- `db` — database / migrations
+
+**Rules:**
+- Description in **imperative mood** ("add feature" not "added feature")
+- Description in **English**
+- No period at end of description
+- Keep description under 72 characters
+- Body (optional) wraps at 80 characters
+
+**Examples:**
+```
+feat(backend): scaffold Spring Boot base project
+feat(backend): add Company REST API with CRUD and pagination
+test(backend): add integration tests with Testcontainers
+refactor(backend): English naming, UseCase pattern, JPA soft delete, domain exceptions
+docs: initial project documentation
+chore(backend): add Maven Wrapper
+```
 
 ### Dependency Pinning
 
@@ -225,6 +262,12 @@ Target stack (planned):
 
 ### Code Patterns & Stack
 
+#### English as Default Language
+
+- **All code must be in English** — error messages, log messages, variable names, class names, method names, database column names, API endpoints, configuration keys, comments, and documentation within code
+- **No exceptions** — even if the business domain or user-facing content is in Portuguese (or any other language), all developer-facing identifiers, messages, and artifacts must be in English
+- This is the **worldwide software engineering standard** and ensures interoperability, readability by international developers, and consistency across the entire codebase
+
 #### General
 
 - Follow official framework idioms and best practices for the language/version used
@@ -238,12 +281,121 @@ Target stack (planned):
 - Use **Lombok** to eliminate boilerplate
 - Use **Records** wherever applicable
 - **All queries/lists must be paginated**
+- **Prefer Spring Data JPA derived queries** over custom JPQL/SQL. Use method-name keywords (`findBy`, `countBy`, `existsBy`, `deleteBy`, `findByXAndY`, `findByXOrderByYDesc`, etc.) whenever possible. Only resort to `@Query` with JPQL/SQL when the query cannot be expressed through derived query methods
 - Consistent naming: `I` prefix for interfaces (e.g. `IService`, `IRepository`)
 - Consistent naming for Services, Repositories, Models, Controllers, Request/Response Records
 
 #### Frontend (Angular)
 
 - Follow Angular architectural and coding standards strictly
+
+### DDD & Hexagonal Architecture
+
+All backend code follows **Domain-Driven Design** with **Hexagonal Architecture** (Ports & Adapters).
+
+#### Bounded Contexts
+
+The system is organized into these bounded contexts:
+- **Access Management** — people, teams, access levels
+- **Goal Management** — goals, scoring, visibility scope
+- **Activity Management** — activities, execution, completion tracking
+- **Organization** — company structure, hierarchy
+
+#### Hexagonal Layers (Package Structure)
+
+```
+backend/src/main/java/com/rumoo/
+├── domain/
+│   ├── access/        # AccessAggregate, PersonAggregate, AccessLevelValueObject, IAccessRepository
+│   ├── goal/          # GoalAggregate, ScoreValueObject, IGoalRepository
+│   ├── activity/      # ActivityAggregate, IActivityRepository
+│   └── organization/  # OrganizationAggregate, IOrganizationRepository
+├── application/       # Use cases (CreateGoalUseCase, CompleteActivityUseCase, etc.)
+│   ├── dto/           # Request/Response DTOs
+│   └── ports/         # Inbound/Outbound port interfaces
+├── infrastructure/    # JPA adapters, external service adapters, mappers
+└── interfaces/        # REST controllers, security filters, incoming adapters
+```
+
+#### Layer Responsibilities
+
+- **Domain**: Entities (Aggregates), Value Objects, Aggregate Roots, Domain Events, Domain Exceptions, Repository interfaces (`I` prefix). This is where all business rules live.
+- **Application**: Use Cases (orchestration only — no business logic), DTOs (Request/Response), Port interfaces.
+- **Infrastructure**: JPA/Hibernate adapters, external service implementations, mappers between domain and persistence models.
+- **Interfaces**: REST controllers, security filters, incoming adapters. Thin layer — delegates to Application layer.
+
+#### Naming Conventions
+
+- **Aggregate Roots**: `*Aggregate` suffix (ex: `GoalAggregate`, `ActivityAggregate`)
+- **Value Objects**: `*ValueObject` suffix (ex: `ScoreValueObject`, `AccessLevelValueObject`)
+- **Repository interfaces**: `I` prefix in Domain layer (ex: `IGoalRepository`, `IActivityRepository`)
+- **Use Cases**: `*UseCase` suffix in Application layer (ex: `CreateGoalUseCase`, `CompleteActivityUseCase`)
+
+#### Domain Events
+
+- Use Domain Events **only when there is cross-aggregate impact** (ex: `ActivityCompletedEvent` affecting a Goal's progress)
+- Events are defined in the Domain layer, dispatched via Application layer
+
+#### Anti-Corruption Layer (ACL)
+
+- Use ACL when one bounded context needs to read data from another
+- ACL converts external models into the local domain model
+- Only introduce when direct repository access is insufficient
+
+#### Golden Rule
+
+> **All business rules must live in the Domain layer.** Never place business logic in controllers, Use Cases, or infrastructure.
+
+#### Example — Goal Aggregate
+
+```java
+// Domain - GoalAggregate.java
+public class GoalAggregate {
+    private GoalId id;
+    private String title;
+    private ScoreValueObject currentScore;
+    private GoalStatus status;
+
+    public void complete(ScoreValueObject earnedScore) {
+        if (this.status == GoalStatus.COMPLETED) {
+            throw new DomainException("Goal already completed");
+        }
+        this.currentScore = this.currentScore.add(earnedScore);
+        if (this.currentScore.isAboveTarget()) {
+            this.status = GoalStatus.COMPLETED;
+        }
+    }
+}
+
+// Domain - ScoreValueObject.java
+public record ScoreValueObject(int value) {
+    public ScoreValueObject {
+        if (value < 0) throw new DomainException("Score cannot be negative");
+    }
+    public ScoreValueObject add(ScoreValueObject other) {
+        return new ScoreValueObject(this.value + other.value);
+    }
+    public boolean isAboveTarget() {
+        return this.value >= 100;
+    }
+}
+
+// Domain - IGoalRepository.java
+public interface IGoalRepository {
+    Optional<GoalAggregate> findById(GoalId id);
+    GoalAggregate save(GoalAggregate goal);
+}
+
+// Application - CreateGoalUseCase.java
+public class CreateGoalUseCase {
+    private final IGoalRepository goalRepository;
+
+    public GoalAggregate execute(CreateGoalRequest request) {
+        GoalAggregate goal = GoalAggregate.create(request.title(), request.initialScore());
+        return goalRepository.save(goal);
+    }
+}
+```
 
 ### Testing (TDD)
 
