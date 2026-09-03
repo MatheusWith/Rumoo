@@ -21,7 +21,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse create(CompanyRequest request) {
-        Company company = new Company(null, request.nome(), request.cnpj(), true, null);
+        Company company = Company.create(request.nome(), request.cnpj());
         Company saved = companyRepository.save(company);
         return CompanyResponse.from(saved);
     }
@@ -38,8 +38,7 @@ public class CompanyService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         long total = companyRepository.count();
-        int offset = safePage * safeSize;
-        List<CompanyResponse> content = companyRepository.findAll(offset, safeSize).stream()
+        List<CompanyResponse> content = companyRepository.findAll(safePage, safeSize).stream()
                 .map(CompanyResponse::from)
                 .toList();
         int totalPages = (int) Math.ceil((double) total / safeSize);
@@ -50,8 +49,7 @@ public class CompanyService {
     public CompanyResponse update(Long id, CompanyRequest request) {
         Company existing = companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        existing.setNome(request.nome());
-        existing.setCnpj(request.cnpj());
+        existing.update(request.nome(), request.cnpj());
         Company updated = companyRepository.save(existing);
         return CompanyResponse.from(updated);
     }
@@ -60,6 +58,6 @@ public class CompanyService {
     public void delete(Long id) {
         companyRepository.findById(id)
                 .orElseThrow(() -> new CompanyNotFoundException(id));
-        companyRepository.delete(id);
+        companyRepository.softDelete(id);
     }
 }

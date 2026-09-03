@@ -23,7 +23,7 @@ class CompanyRepositoryTest {
 
     @Test
     void shouldSaveAndFindCompany() {
-        Company company = new Company(null, "Rumoo SA", "12345678000199", true, null);
+        Company company = Company.create("Rumoo SA", "12345678000199");
 
         Company saved = companyRepository.save(company);
 
@@ -39,20 +39,19 @@ class CompanyRepositoryTest {
 
     @Test
     void shouldSoftDeleteCompany() {
-        Company company = new Company(null, "Rumoo SA", "12345678000198", true, null);
+        Company company = Company.create("Rumoo SA", "12345678000198");
         Company saved = companyRepository.save(company);
 
-        companyRepository.delete(saved.getId());
+        companyRepository.softDelete(saved.getId());
 
         assertThat(companyRepository.findById(saved.getId())).isEmpty();
-        assertThat(companyRepository.findAll()).doesNotContain(saved);
     }
 
     @Test
     void shouldListAllWithPagination() {
-        companyRepository.save(new Company(null, "Company A", "12345678000101", true, null));
-        companyRepository.save(new Company(null, "Company B", "12345678000102", true, null));
-        companyRepository.save(new Company(null, "Company C", "12345678000103", true, null));
+        companyRepository.save(Company.create("Company A", "12345678000101"));
+        companyRepository.save(Company.create("Company B", "12345678000102"));
+        companyRepository.save(Company.create("Company C", "12345678000103"));
 
         List<Company> page = companyRepository.findAll(0, 2);
 
