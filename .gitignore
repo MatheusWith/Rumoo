@@ -6,3 +6,7 @@ adr/
 ADR.md
 CONTEXT.md
 CONTEXT-MAP.md
+
+# Tooling directories
+.codegraph/
+.opencode/
