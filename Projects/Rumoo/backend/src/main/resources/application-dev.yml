@@ -1,6 +1,0 @@
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/rumoo}
-    username: ${DB_USERNAME:rumoo_dev}
-    password: ${DB_PASSWORD:rumoo_dev}
-    driver-class-name: org.postgresql.Driver
