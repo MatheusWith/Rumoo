@@ -17,10 +17,7 @@ declare const require: {
   };
 };
 
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting(),
-);
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 
 const context = require.context('./', true, /\.spec\.ts$/);
 context.keys().forEach(context);
