@@ -1,9 +1,34 @@
-# Local planning and scratch files - never push to remote
-.scratch/
+# === AI-generated artifacts (local-only) ===
+AGENTS.md
+scratch/
 plans/
+CONTEXT.md
+CONTEXT-MAP.md
 adr/
 ADR.md
+.scratch/
 
-# Tooling directories
-.codegraph/
+# === Serena ===
+.serena/
+
+# === OpenCode ===
 .opencode/
+
+# === CodeGraph ===
+.codegraph/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Environment ===
+.env.local
+.env.*.local
+
+# === Frontend ===
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/
+frontend/coverage/
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.prod.ts
