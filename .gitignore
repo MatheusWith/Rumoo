@@ -1,0 +1,21 @@
+# === AI-generated artifacts (local-only) ===
+AGENTS.md
+scratch/
+plans/
+CONTEXT.md
+CONTEXT-MAP.md
+adr/
+ADR.md
+
+# === Serena ===
+.serena/
+
+# === OpenCode ===
+.opencode/
+
+# === CodeGraph ===
+.codegraph/
+
+# === OS ===
+.DS_Store
+Thumbs.db
