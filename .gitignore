@@ -25,6 +25,11 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# === Deploy ===
+deploy/.env
+deploy/.env.*
+!deploy/.env.example
+
 # === Frontend ===
 frontend/dist/
 frontend/.angular/

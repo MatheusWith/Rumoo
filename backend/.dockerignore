@@ -1,0 +1,9 @@
+.git
+.opencode
+.scratch
+.serena
+.codegraph
+target/
+*.md
+!README.md
+.env*

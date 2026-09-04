@@ -1,0 +1,12 @@
+.git
+.opencode
+.scratch
+.serena
+.codegraph
+node_modules/
+dist/
+.angular/
+coverage/
+*.md
+!README.md
+.env*
