@@ -9,12 +9,12 @@ import org.testcontainers.utility.DockerImageName;
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfig {
 
-    @Bean
-    @ServiceConnection
-    PostgreSQLContainer<?> postgresContainer() {
-        return new PostgreSQLContainer<>(DockerImageName.parse("postgres:17"))
-                .withDatabaseName("rumoo")
-                .withUsername("test")
-                .withPassword("test");
-    }
+  @Bean
+  @ServiceConnection
+  PostgreSQLContainer<?> postgresContainer() {
+    return new PostgreSQLContainer<>(DockerImageName.parse("postgres:17"))
+        .withDatabaseName("rumoo")
+        .withUsername("test")
+        .withPassword("test");
+  }
 }

@@ -8,16 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DeleteCompanyUseCase {
 
-    private final ICompanyRepository companyRepository;
+  private final ICompanyRepository companyRepository;
 
-    public DeleteCompanyUseCase(ICompanyRepository companyRepository) {
-        this.companyRepository = companyRepository;
-    }
+  public DeleteCompanyUseCase(ICompanyRepository companyRepository) {
+    this.companyRepository = companyRepository;
+  }
 
-    @Transactional
-    public void execute(Long id) {
-        companyRepository.findById(id)
-                .orElseThrow(() -> new CompanyNotFoundException(id));
-        companyRepository.deactivate(id);
-    }
+  @Transactional
+  public void execute(Long id) {
+    companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException(id));
+    companyRepository.deactivate(id);
+  }
 }

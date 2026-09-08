@@ -37,6 +37,11 @@ module.exports = tseslint.config(
         },
       ],
       'prettier/prettier': 'error',
+      complexity: ['error', { max: 10 }],
+      'max-lines-per-function': [
+        'error',
+        { max: 30, skipBlankLines: true, skipComments: true },
+      ],
     },
   },
   {

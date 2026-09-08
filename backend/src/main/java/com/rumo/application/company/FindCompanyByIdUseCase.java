@@ -9,16 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FindCompanyByIdUseCase {
 
-    private final ICompanyRepository companyRepository;
+  private final ICompanyRepository companyRepository;
 
-    public FindCompanyByIdUseCase(ICompanyRepository companyRepository) {
-        this.companyRepository = companyRepository;
-    }
+  public FindCompanyByIdUseCase(ICompanyRepository companyRepository) {
+    this.companyRepository = companyRepository;
+  }
 
-    @Transactional(readOnly = true)
-    public CompanyResponse execute(Long id) {
-        return companyRepository.findById(id)
-                .map(CompanyResponse::from)
-                .orElseThrow(() -> new CompanyNotFoundException(id));
-    }
+  @Transactional(readOnly = true)
+  public CompanyResponse execute(Long id) {
+    return companyRepository
+        .findById(id)
+        .map(CompanyResponse::from)
+        .orElseThrow(() -> new CompanyNotFoundException(id));
+  }
 }

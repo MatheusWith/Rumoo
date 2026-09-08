@@ -11,18 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UpdateCompanyUseCase {
 
-    private final ICompanyRepository companyRepository;
+  private final ICompanyRepository companyRepository;
 
-    public UpdateCompanyUseCase(ICompanyRepository companyRepository) {
-        this.companyRepository = companyRepository;
-    }
+  public UpdateCompanyUseCase(ICompanyRepository companyRepository) {
+    this.companyRepository = companyRepository;
+  }
 
-    @Transactional
-    public CompanyResponse execute(Long id, CompanyRequest request) {
-        Company existing = companyRepository.findById(id)
-                .orElseThrow(() -> new CompanyNotFoundException(id));
-        existing.update(request.name(), request.cnpj());
-        Company updated = companyRepository.save(existing);
-        return CompanyResponse.from(updated);
-    }
+  @Transactional
+  public CompanyResponse execute(Long id, CompanyRequest request) {
+    Company existing =
+        companyRepository.findById(id).orElseThrow(() -> new CompanyNotFoundException(id));
+    existing.update(request.name(), request.cnpj());
+    Company updated = companyRepository.save(existing);
+    return CompanyResponse.from(updated);
+  }
 }

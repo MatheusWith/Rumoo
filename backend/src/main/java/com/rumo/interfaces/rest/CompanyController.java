@@ -25,56 +25,54 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/companies")
 public class CompanyController {
 
-    private final CreateCompanyUseCase createCompanyUseCase;
-    private final FindCompanyByIdUseCase findCompanyByIdUseCase;
-    private final ListCompaniesUseCase listCompaniesUseCase;
-    private final UpdateCompanyUseCase updateCompanyUseCase;
-    private final DeleteCompanyUseCase deleteCompanyUseCase;
+  private final CreateCompanyUseCase createCompanyUseCase;
+  private final FindCompanyByIdUseCase findCompanyByIdUseCase;
+  private final ListCompaniesUseCase listCompaniesUseCase;
+  private final UpdateCompanyUseCase updateCompanyUseCase;
+  private final DeleteCompanyUseCase deleteCompanyUseCase;
 
-    public CompanyController(
-            CreateCompanyUseCase createCompanyUseCase,
-            FindCompanyByIdUseCase findCompanyByIdUseCase,
-            ListCompaniesUseCase listCompaniesUseCase,
-            UpdateCompanyUseCase updateCompanyUseCase,
-            DeleteCompanyUseCase deleteCompanyUseCase
-    ) {
-        this.createCompanyUseCase = createCompanyUseCase;
-        this.findCompanyByIdUseCase = findCompanyByIdUseCase;
-        this.listCompaniesUseCase = listCompaniesUseCase;
-        this.updateCompanyUseCase = updateCompanyUseCase;
-        this.deleteCompanyUseCase = deleteCompanyUseCase;
-    }
+  public CompanyController(
+      CreateCompanyUseCase createCompanyUseCase,
+      FindCompanyByIdUseCase findCompanyByIdUseCase,
+      ListCompaniesUseCase listCompaniesUseCase,
+      UpdateCompanyUseCase updateCompanyUseCase,
+      DeleteCompanyUseCase deleteCompanyUseCase) {
+    this.createCompanyUseCase = createCompanyUseCase;
+    this.findCompanyByIdUseCase = findCompanyByIdUseCase;
+    this.listCompaniesUseCase = listCompaniesUseCase;
+    this.updateCompanyUseCase = updateCompanyUseCase;
+    this.deleteCompanyUseCase = deleteCompanyUseCase;
+  }
 
-    @PostMapping
-    public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CompanyRequest request) {
-        CompanyResponse response = createCompanyUseCase.execute(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping
+  public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CompanyRequest request) {
+    CompanyResponse response = createCompanyUseCase.execute(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CompanyResponse> findById(@PathVariable Long id) {
-        CompanyResponse response = findCompanyByIdUseCase.execute(id);
-        return ResponseEntity.ok(response);
-    }
+  @GetMapping("/{id}")
+  public ResponseEntity<CompanyResponse> findById(@PathVariable Long id) {
+    CompanyResponse response = findCompanyByIdUseCase.execute(id);
+    return ResponseEntity.ok(response);
+  }
 
-    @GetMapping
-    public ResponseEntity<CompanyPage> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        CompanyPage response = listCompaniesUseCase.execute(page, size);
-        return ResponseEntity.ok(response);
-    }
+  @GetMapping
+  public ResponseEntity<CompanyPage> findAll(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    CompanyPage response = listCompaniesUseCase.execute(page, size);
+    return ResponseEntity.ok(response);
+  }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CompanyResponse> update(@PathVariable Long id, @Valid @RequestBody CompanyRequest request) {
-        CompanyResponse response = updateCompanyUseCase.execute(id, request);
-        return ResponseEntity.ok(response);
-    }
+  @PutMapping("/{id}")
+  public ResponseEntity<CompanyResponse> update(
+      @PathVariable Long id, @Valid @RequestBody CompanyRequest request) {
+    CompanyResponse response = updateCompanyUseCase.execute(id, request);
+    return ResponseEntity.ok(response);
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        deleteCompanyUseCase.execute(id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable Long id) {
+    deleteCompanyUseCase.execute(id);
+    return ResponseEntity.noContent().build();
+  }
 }

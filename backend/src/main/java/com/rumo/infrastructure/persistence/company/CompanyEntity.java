@@ -21,16 +21,16 @@ import lombok.Setter;
 @Builder
 public class CompanyEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false, unique = true)
-    private String cnpj;
+  @Column(nullable = false, unique = true)
+  private String cnpj;
 
-    @Column(nullable = false)
-    private boolean active;
+  @Column(nullable = false)
+  private boolean active;
 }

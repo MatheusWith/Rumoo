@@ -5,15 +5,15 @@ import java.util.Optional;
 
 public interface ICompanyRepository {
 
-    Company save(Company company);
+  Company save(Company company);
 
-    Optional<Company> findById(Long id);
+  Optional<Company> findById(Long id);
 
-    List<Company> findAll(int page, int size);
+  List<Company> findAll(int page, int size);
 
-    long count();
+  long count();
 
-    void deactivate(Long id);
+  void deactivate(Long id);
 
-    void delete(Long id);
+  void delete(Long id);
 }
