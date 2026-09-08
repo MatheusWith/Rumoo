@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RumooApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(RumooApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(RumooApplication.class, args);
+  }
 }

@@ -9,11 +9,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface CompanyJpaRepository extends JpaRepository<CompanyEntity, Long> {
 
-    Page<CompanyEntity> findAllByActiveTrue(Pageable pageable);
+  Page<CompanyEntity> findAllByActiveTrue(Pageable pageable);
 
-    long countByActiveTrue();
+  long countByActiveTrue();
 
-    @Modifying
-    @Query("UPDATE CompanyEntity c SET c.active = :active WHERE c.id = :id")
-    void updateActiveById(@Param("id") Long id, @Param("active") boolean active);
+  @Modifying
+  @Query("UPDATE CompanyEntity c SET c.active = :active WHERE c.id = :id")
+  void updateActiveById(@Param("id") Long id, @Param("active") boolean active);
 }

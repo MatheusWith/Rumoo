@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude test classes from SpotBugs analysis -->
+    <Match>
+        <Class name="~.*Test$|~.*Tests$|~.*TestCase$"/>
+    </Match>
+
+    <!-- Exclude @Repository / @Service / @RestController classes: Spring-managed beans
+         are singletons injected by the container; EI_EXPOSE_REP/EI_EXPOSE_REP2 are
+         known false positives for constructor-injected dependencies. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <Class name="~.*UseCase"/>
+            <Class name="~.*Controller"/>
+            <Class name="~.*Repository"/>
+        </Or>
+    </Match>
+
+    <!-- Exclude record DTO internals: records expose their components by design. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="~.*dto\..*"/>
+    </Match>
+
+    <!-- Exclude Entity classes: persistence objects expose mutable fields by design. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="~.*Entity$"/>
+    </Match>
+</FindBugsFilter>
