@@ -39,6 +39,9 @@ services:
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-Rumoo}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-rumoo-frontend}
 
+  keycloak:
+    command: start-dev --import-realm
+
   postgres:
     image: postgres:17-alpine
     ports:
