@@ -50,5 +50,15 @@ services:
           memory: 256M
           cpus: "0.5"
 
+  keycloak:
+    command: start --import-realm
+    environment:
+      KC_HOSTNAME: ${KC_HOSTNAME}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
 volumes:
   pgdata:
