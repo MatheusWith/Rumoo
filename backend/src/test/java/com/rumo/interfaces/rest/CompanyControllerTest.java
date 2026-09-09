@@ -19,16 +19,22 @@ import com.rumo.application.company.dto.CompanyPage;
 import com.rumo.application.company.dto.CompanyRequest;
 import com.rumo.application.company.dto.CompanyResponse;
 import com.rumo.domain.company.CompanyNotFoundException;
+import com.rumo.interfaces.security.SecurityConfig;
+import com.rumo.interfaces.security.TestJwtDecoderConfig;
+import com.rumo.interfaces.security.TestTokens;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(CompanyController.class)
+@Import({TestJwtDecoderConfig.class, SecurityConfig.class})
 class CompanyControllerTest {
 
   @Autowired private MockMvc mockMvc;
@@ -54,6 +60,7 @@ class CompanyControllerTest {
     mockMvc
         .perform(
             post("/api/v1/companies")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:create"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -66,7 +73,11 @@ class CompanyControllerTest {
     String body = "{\"name\":\"Rumoo SA\"}";
 
     mockMvc
-        .perform(post("/api/v1/companies").contentType(MediaType.APPLICATION_JSON).content(body))
+        .perform(
+            post("/api/v1/companies")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:create"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
         .andExpect(status().isBadRequest());
   }
 
@@ -76,7 +87,9 @@ class CompanyControllerTest {
     when(findCompanyByIdUseCase.execute(1L)).thenReturn(response);
 
     mockMvc
-        .perform(get("/api/v1/companies/1"))
+        .perform(
+            get("/api/v1/companies/1")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:read")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(1L))
         .andExpect(jsonPath("$.name").value("Rumoo SA"));
@@ -87,7 +100,9 @@ class CompanyControllerTest {
     when(findCompanyByIdUseCase.execute(99L)).thenThrow(new CompanyNotFoundException(99L));
 
     mockMvc
-        .perform(get("/api/v1/companies/99"))
+        .perform(
+            get("/api/v1/companies/99")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:read")))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").value("Company not found with id: 99"));
   }
@@ -99,7 +114,9 @@ class CompanyControllerTest {
     when(listCompaniesUseCase.execute(0, 20)).thenReturn(page);
 
     mockMvc
-        .perform(get("/api/v1/companies"))
+        .perform(
+            get("/api/v1/companies")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:read")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].name").value("Company A"))
         .andExpect(jsonPath("$.totalElements").value(1));
@@ -114,6 +131,7 @@ class CompanyControllerTest {
     mockMvc
         .perform(
             put("/api/v1/companies/1")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:update"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -122,7 +140,11 @@ class CompanyControllerTest {
 
   @Test
   void shouldDeleteCompany() throws Exception {
-    mockMvc.perform(delete("/api/v1/companies/1")).andExpect(status().isNoContent());
+    mockMvc
+        .perform(
+            delete("/api/v1/companies/1")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:delete")))
+        .andExpect(status().isNoContent());
   }
 
   @Test
@@ -134,6 +156,7 @@ class CompanyControllerTest {
     mockMvc
         .perform(
             put("/api/v1/companies/99")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:update"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isNotFound());
@@ -145,6 +168,10 @@ class CompanyControllerTest {
         .when(deleteCompanyUseCase)
         .execute(99L);
 
-    mockMvc.perform(delete("/api/v1/companies/99")).andExpect(status().isNotFound());
+    mockMvc
+        .perform(
+            delete("/api/v1/companies/99")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "company:delete")))
+        .andExpect(status().isNotFound());
   }
 }
