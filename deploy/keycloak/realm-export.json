@@ -24,14 +24,47 @@
         "composite": false
       },
       {
+        "name": "company:create",
+        "description": "Create companies",
+        "composite": false
+      },
+      {
+        "name": "company:read",
+        "description": "Read companies",
+        "composite": false
+      },
+      {
+        "name": "company:update",
+        "description": "Update companies",
+        "composite": false
+      },
+      {
+        "name": "company:delete",
+        "description": "Delete companies",
+        "composite": false
+      },
+      {
         "name": "admin",
         "description": "Rumoo administrator",
-        "composite": false
+        "composite": true,
+        "composites": {
+          "realm": [
+            "company:create",
+            "company:read",
+            "company:update",
+            "company:delete"
+          ]
+        }
       },
       {
         "name": "collaborator",
         "description": "Rumoo collaborator",
-        "composite": false
+        "composite": true,
+        "composites": {
+          "realm": [
+            "company:read"
+          ]
+        }
       }
     ]
   },
@@ -48,10 +81,12 @@
       "serviceAccountsEnabled": false,
       "authorizationServicesEnabled": false,
       "redirectUris": [
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "http://localhost:4200/*"
       ],
       "webOrigins": [
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "http://localhost:4200"
       ],
       "defaultClientScopes": [
         "acr",
@@ -69,7 +104,7 @@
         "microprofile-jwt"
       ],
       "attributes": {
-        "post.logout.redirect.uris": "http://localhost:8080/*",
+        "post.logout.redirect.uris": "http://localhost:8080/*,http://localhost:4200/*",
         "pkce.code.challenge.method": "S256"
       }
     },
@@ -82,7 +117,7 @@
       "secret": "${KEYCLOAK_BACKEND_CLIENT_SECRET}",
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": true,
+      "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "authorizationServicesEnabled": false,
       "redirectUris": [],
