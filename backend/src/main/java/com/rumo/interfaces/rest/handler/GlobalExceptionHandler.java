@@ -3,12 +3,18 @@ package com.rumo.interfaces.rest.handler;
 import com.rumo.domain.company.CompanyNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDenied(AuthorizationDeniedException ex) {
+    return buildResponse(HttpStatus.FORBIDDEN, "Access denied");
+  }
 
   @ExceptionHandler(CompanyNotFoundException.class)
   public ResponseEntity<ErrorResponse> handleNotFound(CompanyNotFoundException ex) {

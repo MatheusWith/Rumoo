@@ -45,6 +45,12 @@ module.exports = tseslint.config(
     },
   },
   {
+    files: ['**/*.spec.ts'],
+    rules: {
+      'max-lines-per-function': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [
       ...angular.configs.templateRecommended,

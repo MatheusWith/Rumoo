@@ -14,6 +14,7 @@
             <Class name="~.*UseCase"/>
             <Class name="~.*Controller"/>
             <Class name="~.*Repository"/>
+            <Class name="~.*Config$"/>
         </Or>
     </Match>
 

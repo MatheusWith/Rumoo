@@ -1,3 +1,19 @@
-<div class="p-4 font-bold text-red-500">
+<nav class="flex items-center justify-between border-b border-gray-200 p-4">
+  <a routerLink="/dashboard" class="font-bold text-red-500">Rumoo</a>
+  @if (isAuthenticated) {
+    <button
+      type="button"
+      (click)="logout()"
+      class="rounded px-3 py-1 text-gray-700 hover:text-gray-900"
+    >
+      Sign out
+    </button>
+  } @else {
+    <button type="button" (click)="login()" class="rounded bg-gray-800 px-3 py-1 text-white">
+      Sign in
+    </button>
+  }
+</nav>
+<div class="p-4">
   <router-outlet />
 </div>

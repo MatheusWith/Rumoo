@@ -11,6 +11,7 @@ import com.rumo.application.company.dto.CompanyResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,18 +46,21 @@ public class CompanyController {
   }
 
   @PostMapping
+  @PreAuthorize("hasAuthority('company:create')")
   public ResponseEntity<CompanyResponse> create(@Valid @RequestBody CompanyRequest request) {
     CompanyResponse response = createCompanyUseCase.execute(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @GetMapping("/{id}")
+  @PreAuthorize("hasAuthority('company:read')")
   public ResponseEntity<CompanyResponse> findById(@PathVariable Long id) {
     CompanyResponse response = findCompanyByIdUseCase.execute(id);
     return ResponseEntity.ok(response);
   }
 
   @GetMapping
+  @PreAuthorize("hasAuthority('company:read')")
   public ResponseEntity<CompanyPage> findAll(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     CompanyPage response = listCompaniesUseCase.execute(page, size);
@@ -64,6 +68,7 @@ public class CompanyController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("hasAuthority('company:update')")
   public ResponseEntity<CompanyResponse> update(
       @PathVariable Long id, @Valid @RequestBody CompanyRequest request) {
     CompanyResponse response = updateCompanyUseCase.execute(id, request);
@@ -71,6 +76,7 @@ public class CompanyController {
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasAuthority('company:delete')")
   public ResponseEntity<Void> delete(@PathVariable Long id) {
     deleteCompanyUseCase.execute(id);
     return ResponseEntity.noContent().build();
