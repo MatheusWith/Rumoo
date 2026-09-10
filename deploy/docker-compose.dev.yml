@@ -1,3 +1,9 @@
+# Dev overlay. Standalone COMPOSE file: inherits base service definitions via
+# `extends` and only overrides what dev needs, so either
+#   docker compose -f docker-compose.dev.yml up
+# or the classic
+#   docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up
+# works. Run from this directory (./.env provides DB_PASSWORD etc.).
 services:
   nginx:
     image: nginx:alpine
@@ -10,9 +16,10 @@ services:
       - keycloak
 
   backend:
+    extends:
+      file: docker-compose.base.yml
+      service: backend
     build:
-      context: ../backend
-      dockerfile: Dockerfile
       target: dev
     command: ./mvnw spring-boot:run -Dspring-boot.run.fork=false
     restart: on-failure
@@ -24,11 +31,7 @@ services:
       - ../backend/src:/app/src:ro
       - backend-m2:/root/.m2/repository
     environment:
-      SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8081
-      DB_URL: jdbc:postgresql://postgres:5432/rumoo
-      DB_USERNAME: ${DB_USERNAME:-rumoo}
-      DB_PASSWORD: ${DB_PASSWORD}
       KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8080/auth}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-Rumoo}
       KEYCLOAK_BACKEND_CLIENT_ID: ${KEYCLOAK_BACKEND_CLIENT_ID:-rumoo-backend}
@@ -45,6 +48,9 @@ services:
       context: ../
       dockerfile: frontend/Dockerfile
       target: dev
+    # Angular dev server binds 127.0.0.1 by default; expose it on all
+    # container interfaces so nginx upstream `frontend:4200` can reach it.
+    command: pnpm exec ng serve --host 0.0.0.0
     volumes:
       - ../frontend/src:/app/src
     environment:
@@ -54,23 +60,17 @@ services:
       CI: "true"
 
   keycloak:
+    extends:
+      file: docker-compose.base.yml
+      service: keycloak
     command: start-dev --import-realm
 
   postgres:
-    image: postgres:17-alpine
+    extends:
+      file: docker-compose.base.yml
+      service: postgres
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: rumoo
-      POSTGRES_USER: ${DB_USERNAME:-rumoo}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-rumoo}"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
 volumes:
   pgdata:

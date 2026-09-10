@@ -1,13 +1,23 @@
-import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { AuthGuardData, createAuthGuard } from 'keycloak-angular';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from './auth.service';
 
-const isAccessAllowed = async (
-  _route: ActivatedRouteSnapshot,
-  _state: RouterStateSnapshot,
-  authData: AuthGuardData
-): Promise<boolean> => {
-  // TODO: implement actual role-based logic when features arrive
-  return authData.authenticated;
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isAuthenticated) {
+    return true;
+  }
+  return router.createUrlTree(['/login']);
 };
 
-export const authGuard = createAuthGuard(isAccessAllowed);
+export const loginPageGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isAuthenticated) {
+    return router.createUrlTree(['/dashboard']);
+  }
+  return true;
+};

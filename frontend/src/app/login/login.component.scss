@@ -1,0 +1,15 @@
+form {
+  max-width: 20rem;
+  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title {
+  margin-bottom: 0.5rem;
+}
+
+.error {
+  color: #b00020;
+}
