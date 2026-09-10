@@ -1,44 +1,99 @@
-# Authentication and Authorization with Keycloak — Rumoo
+# Autenticação e Autorização com Keycloak — Rumoo
 
-> Architecture document. Describes the **topology**, the **flows**, and the **configuration** of
-> Rumoo's authentication and authorization using Keycloak. No implementation is covered here;
-> this is the reference model the implementation is built from.
+> Documento de arquitetura. Descreve a **topologia**, os **fluxos** e a **configuração** de
+> autenticação e autorização do Rumoo usando Keycloak. Nenhuma implementação é coberta aqui;
+> este é o modelo de referência a partir do qual a implementação foi feita.
 
 ---
 
-## 1. Overview and decisions
+## 0. O que mudou nesta revisão
 
-Consolidated decisions:
+A autenticação do frontend deixou de usar o **Authorization Code + PKCE** (fluxo de redirect com
+tela de login hospedada no Keycloak) e passou a usar **Resource Owner Password Credentials
+(ROPC / Direct Access Grants)**. A linha do tempo:
 
-| # | Decision | Value |
-|---|----------|-------|
-| D1 | Login flow (frontend) | **Resource Owner Password Credentials** (`grant_type=password`) against the Rumoo Realm token endpoint; client **public** |
-| D2 | Login screen ownership | **SPA-owned Sign-in Form**; no Keycloak-hosted page, no redirect, no `check-sso`, no `silent-check-sso.html` |
-| D3 | Backend | **Resource Server** with **JWT** validation (stateless, via JWKS) |
-| D4 | Deploy topology | Keycloak on **subpath `/auth`** behind nginx (same origin) |
-| D5 | Realm | **one single realm** `Rumoo` |
+| Antes (fluxo removido) | Depois (fluxo atual) |
+|------------------------|----------------------|
+| Login com redirect para a página do Keycloak (`authorize` + PKCE) | Login na **tela própria da SPA** (**Sign-in Form**), trocando credenciais direto no token endpoint (`grant_type=password`) |
+| `onLoad: check-sso` + `silent-check-sso.html` na inicialização | Sem verificação de sessão ao carregar — usuário deslogado vai para `/login` |
+| `keycloak-angular` + `keycloak-js` faziam init/refresh/interceptor | `AuthService` próprio: sessão em memória, refresh automático, interceptor local de `Bearer` |
+| Logout **SSO** (end-session OIDC, encerra sessão global do realm) | Logout **local**: limpa a sessão em memória e volta para `/login` |
+| `grant_type=password` desabilitado nos dois clients | `rumoo-frontend` com Direct Access Grants habilitado; `rumoo-backend` inalterado |
+| Redirect URIs e post-logout URIs configurados | Redirecionamentos não são mais necessários |
+
+Removidos do código: `keycloak-angular`, `keycloak-js`, `keycloak.init.ts`,
+`public/silent-check-sso.html` e os providers de Keycloak em `app.config.ts`. O **backend não
+mudou**: continua um resource server stateless validando o mesmo issuer/JWKS, com `401`/`403`
+inalterados.
+
+---
+
+## 1. Visão geral e decisões
+
+Decisões fundamentais consolidadas:
+
+| # | Decisão | Valor |
+|---|---------|-------|
+| D1 | Fluxo de login (frontend) | **Resource Owner Password Credentials** (`grant_type=password`) no token endpoint do Rumoo Realm; client **public** |
+| D2 | Posse da tela de login | **Sign-in Form** da SPA; sem página hospedada no Keycloak, sem redirect, sem `check-sso`, sem `silent-check-sso.html` |
+| D3 | Backend | **Resource Server** com validação **JWT** (stateless, via JWKS) |
+| D4 | Topologia de deploy | Keycloak em **subpath `/auth`** atrás do nginx (mesma origem) |
+| D5 | Realm | **um único realm** `Rumoo` |
 | D6 | Clients | `rumoo-frontend` (**public**, Direct Access Grants) + `rumoo-backend` (**confidential** + service account) |
-| D7 | Authorization model | **Roles = granular permissions**; **Groups = organization + role inheritance** |
-| D8 | Token content | **realm roles** in the token (via `realm_access.roles`); groups **not** in the token (management only) |
-| D9 | Role granularity | **`entity:action`** (e.g. `company:create`) |
-| D10 | Logout | **local only** — clears the in-memory session and routes to `/login`; no global (SSO) session end |
-| D11 | Refresh | automatic by `AuthService` (`grant_type=refresh_token`) before Access Token expiry |
-| D12 | Backend session | **none** — backend fully stateless, authorizes by token |
+| D7 | Modelo de autorização | **Roles = permissões granulares**; **Groups = organização + herança de roles** |
+| D8 | Conteúdo do token | **realm roles** no token (via `realm_access.roles`); groups **não** vão no token (só gestão) |
+| D9 | Granularidade das roles | **`entidade:acao`** (ex.: `company:create`) |
+| D10 | Logout | **somente local** — limpa a sessão em memória e roteia para `/login`; não encerra sessão global (SSO) |
+| D11 | Refresh | automático pelo `AuthService` (`grant_type=refresh_token`) antes da expiração do Access Token |
+| D12 | Sessão no backend | **nenhuma** — backend 100% stateless, autoriza pelo token |
 
-> **Notes:**
-> - The move from Authorization Code + PKCE to Resource Owner Password Credentials is a
->   deliberate, documented deviation from the previous redirect-based design. See the ADR
->   (`docs/adr/0002-use-ropc-for-spa-login.md`).
-> - **Q9** role format: adopted `entity:action` (D9). **Q10** backend client with service
->   account (D6).
+> **Notas:**
+> - A saída do redirect flow e a adoção de ROPC são uma **decisão deliberada e documentada** —
+>   ver subseção 1.1. Antes deste documento, o fluxo era Authorization Code + PKCE.
+> - **Q9** (formato de roles) e **Q10** (service account no backend) foram adotados neste
+>   documento (D9, D6).
+
+### 1.1 Decisão de arquitetura: ROPC em vez de redirect SSO
+
+Registro da decisão que levou à adoção do ROPC, mantido neste documento.
+
+**Contexto:** o negócio quer uma tela de login **própria** (renderizada pela SPA, customizável
+pelo produto), sem redirect para a página do identity provider. Isso não é possível com
+Authorization Code + PKCE (formulário preso ao Keycloak) nem com `directAccessGrantsEnabled`
+desabilitado — era preciso trocar o mecanismo (grant type).
+
+**Alternativas consideradas:**
+
+1. **Tema personalizado no Keycloak** — manter PKCE mas estilizar a página de login do provider.
+   *Rejeitada:* a página continua no Keycloak (limita markup/estilo ao modelo de tema) e mantém o
+   redirect e o acoplamento de SSO.
+2. **Formulário SPA dirigindo o `login-actions` do Keycloak** — renderizar o formulário na SPA e
+   postar no endpoint de formulário do Keycloak. *Rejeitada:* não padronizada, frágil, acopla a
+   SPA ao HTML do provider; erro e sessão opacos.
+3. **Resource Owner Password Credentials** — a SPA troca usuário/senha direto no token endpoint
+   (`grant_type=password`). *Escolhida:* único mecanismo OIDC padrão que permite à SPA possuir o
+   formulário e obter o token em um passo.
+
+**Consequências aceitas (e mitigações):**
+
+- A senha passa pelo **JavaScript do browser** até o Rumoo Realm. O BCP da OAuth desaconselha ROPC
+  para isso; é uso deliberado, com a tela própria como requisito explícito.
+- **Perda do `check-sso`**: a SPA não reestabelece sessão Keycloak silenciosamente ao carregar.
+- **Perda do logout SSO (global)**: sem end-session OIDC; o logout limpa apenas a sessão em memória
+  da SPA.
+- **Sessão apenas em memória**: reload da página volta para `/login` (aceito — nada sensível
+  sobrevive à vida da página).
+- **Mitigação:** backend continua validando **todo** request (assinatura, issuer, expiração, roles)
+  contra o mesmo issuer/JWKS; sessão estritamente em memória; senha nunca persistida/logada;
+  token POST é same-origin no stack de dev (nginx), sem CORS.
 
 ---
 
-## 2. Topology
+## 2. Topologia
 
 ```
                         ┌──────────────────────────────────────────────────┐
-                        │              Domain (e.g. rumoo.app)            │
+                        │              Domínio (ex.: rumoo.app)            │
                         │                                                  │
    Browser / SPA  ───▶  │   nginx (reverse proxy)                          │
    (Angular)            │     │         │         │                        │
@@ -50,242 +105,245 @@ Consolidated decisions:
                         │             :8080                :8080 (int.)   │
                         └──────────────────────────────────────────────────┘
 
-  - /app   → frontend container (static Angular)
-  - /api   → backend container (Spring Boot resource server)
-  - /auth  → Keycloak container (realm Rumoo)
+  - /app   → container frontend (Angular estático)
+  - /api   → container backend (Spring Boot resource server)
+  - /auth  → container Keycloak (realm Rumoo)
 ```
 
-**Key points:**
+**Pontos-chave:**
 
-- **Single domain/host.** Keycloak is exposed on subpath `/auth` by nginx, together with the SPA
-  (`/app`) and API (`/api`) routes. The SPA, the token endpoint and the API share the nginx
-  origin, so the password-grant token POST is **same-origin** — no CORS work needed.
-- **Dev:** the dev nginx publishes port 8080 (`deploy/docker-compose.dev.yml`); Keycloak is
-  reachable at `http://localhost:8080/auth`.
-- **Prod:** self-hosted Keycloak (project convention), also under `/auth`; `KEYCLOAK_URL` derived
-  from the domain.
+- **Um único domínio/host.** O Keycloak é exposto em subpath `/auth` pelo nginx, junto das rotas
+  da SPA (`/app`) e da API (`/api`). A SPA, o token endpoint e a API compartilham a origem do
+  nginx, então o POST de credenciais (grant) é **same-origin** — sem trabalho de CORS.
+- **Dev:** o nginx de dev publica a porta 8080 (`deploy/docker-compose.dev.yml`); o Keycloak fica
+  em `http://localhost:8080/auth`.
+- **Prod:** Keycloak self-hosted (convenção do projeto), também sob `/auth`; `KEYCLOAK_URL`
+  derivado do domínio.
 
-### Environment variables
+### Variáveis de ambiente
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `KEYCLOAK_URL` | Public base URL of Keycloak | `http://localhost:8080/auth` |
-| `KEYCLOAK_REALM` | Realm name | `Rumoo` |
-| `KEYCLOAK_CLIENT_ID` | Public frontend client | `rumoo-frontend` |
-| `KEYCLOAK_BACKEND_CLIENT_ID` | Confidential backend client | `rumoo-backend` |
-| `KEYCLOAK_BACKEND_CLIENT_SECRET` | Confidential client secret (never in the frontend) | *(secret)* |
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `KEYCLOAK_URL` | Base URL pública do Keycloak | `http://localhost:8080/auth` |
+| `KEYCLOAK_REALM` | Nome do realm | `Rumoo` |
+| `KEYCLOAK_CLIENT_ID` | Client public do frontend | `rumoo-frontend` |
+| `KEYCLOAK_BACKEND_CLIENT_ID` | Client confidential do backend | `rumoo-backend` |
+| `KEYCLOAK_BACKEND_CLIENT_SECRET` | Secret do client confidential (nunca no frontend) | *(segredo)* |
 
-> The client secret **never** lives in the frontend (a public client has no secret). The
-> `rumoo-backend` secret lives only in the backend/deploy, sourced from an env var.
+> O secret do client **nunca** reside no frontend (client public não tem secret). O secret do
+> `rumoo-backend` vive apenas no backend/deploy, vindo de env var.
 
 ---
 
-## 3. Authentication Flow
+## 3. Fluxo de Autenticação
 
 ### 3.1 Login (Resource Owner Password Credentials)
 
 ```
-User                  Angular (SPA)              Keycloak            Backend
+Usuário                Angular (SPA)              Keycloak            Backend
    │                        │                       │                   │
-   │ 1. opens /dashboard    │                       │                   │
-   │───────────────────────▶│ guard: no session     │                   │
-   │◀── redirect to /login ─│                       │                   │
-   │ 2. submits credentials │                       │                   │
+   │ 1. abre /dashboard     │                       │                   │
+   │───────────────────────▶│ guard: sem sessão     │                   │
+   │◀── redirect para /login│                       │                   │
+   │ 2. envia credenciais   │                       │                   │
    │───────────────────────▶│ 3. POST token         │                   │
    │                        │  grant_type=password  │                   │
    │                        │──────────────────────▶│                   │
    │                        │◀── access/refresh/id tokens ──             │
-   │                        │ 4. session in memory  │                   │
+   │                        │ 4. sessão em memória  │                   │
    │ 5. request /api        │                       │                   │
    │───────────────────────▶│                       │ (Bearer JWT) ────▶│
    │                        │                       │                   │
 ```
 
-1. A signed-out user opens `/dashboard`; the `authGuard` finds no session and redirects to `/login`.
-2. The user submits username and password on the **SPA-owned Sign-in Form** (no Keycloak page,
-   no navigation).
-3. The `AuthService` posts `grant_type=password` with the client id and credentials to the Rumoo
-   Realm token endpoint (`/realms/Rumoo/protocol/openid-connect/token`).
-4. On success the token set (Access + Refresh) is held **in memory**; the HTTP interceptor
-   attaches `Authorization: Bearer <access_token>` to `/api/**` requests.
-5. A successful login always navigates to `/dashboard`. Invalid credentials surface as an inline
-   error on the Sign-in Form.
+1. Um usuário deslogado abre `/dashboard`; o `authGuard` não encontra sessão e redireciona para
+   `/login`.
+2. O usuário envia usuário e senha no **Sign-in Form** (tela própria da SPA — sem página do
+   Keycloak, sem navegação).
+3. O `AuthService` faz POST com `grant_type=password` (+ `client_id` e credenciais) no token
+   endpoint do Rumoo Realm (`/realms/Rumoo/protocol/openid-connect/token`).
+4. Em sucesso, o conjunto de tokens (Access + Refresh) fica **em memória**; o interceptor HTTP
+   anexa `Authorization: Bearer <access_token>` às requisições `/api/**`.
+5. Um login bem-sucedido sempre navega para `/dashboard`. Credenciais inválidas geram erro inline
+   no Sign-in Form. Um usuário autenticado que abre `/login` é redirecionado para `/dashboard`.
 
-### 3.2 Refresh / expiry
+### 3.2 Refresh / expiração
 
-- The `AuthService` derives the Access Token expiry from its `exp` claim and refreshes
-  **pre-emptively** before expiry via `grant_type=refresh_token`; a rejected refresh clears the
-  session and routes the user back to `/login`.
-- A single `401` from the API triggers one refresh-and-retry of the failed request; repeated
-  failure ends the session.
-- The backend is **stateless**: every request is authorized by the JWT; **no server session and
-  no per-request Keycloak call**.
+- O `AuthService` deriva a expiração do Access Token do claim `exp` e faz o refresh
+  **preventivamente** antes da expiração via `grant_type=refresh_token`; um refresh rejeitado
+  limpa a sessão e roteia o usuário de volta para `/login`.
+- Um único `401` da API dispara um refresh-e-tentativa da requisição; falha repetida encerra a
+  sessão.
+- O backend é **stateless**: cada request é autorizado pelo JWT; **não há sessão de servidor nem
+  chamada ao Keycloak por request**.
 
 ### 3.3 Logout (local)
 
-- Logout clears the in-memory session in the `AuthService` and routes to `/login`.
-- There is **no OIDC end-session call**: with the redirect flow gone, Keycloak is not aware of
-  the SPA logout (loss of global SSO logout — a documented consequence of the ROPC decision).
+- O logout limpa a sessão em memória no `AuthService` e roteia para `/login`.
+- **Não há chamada de end-session (OIDC)**: com o fluxo de redirect removido, o Keycloak não fica
+  sabendo do logout da SPA (perda do logout SSO global — consequência documentada da decisão ROPC).
 
 ---
 
-## 4. Keycloak Configuration
+## 4. Configuração no Keycloak
 
 ### 4.1 Realm
 
-| Item | Value |
+| Item | Valor |
 |------|-------|
 | Realm name | `Rumoo` |
 | Ingress | Realm tokens / access tokens |
 
-A single realm serves the whole application. A new `KEYCLOAK_CLIENT_ID` does not require a new realm.
+Um único realm serve toda a aplicação. Um novo `KEYCLOAK_CLIENT_ID` não exige novo realm.
 
 ### 4.2 Clients
 
 #### 4.2.1 `rumoo-frontend` (public)
 
-For the Angular SPA.
+Para o SPA Angular.
 
-| Property | Value |
-|----------|-------|
-| Client type | **Public** (no secret) |
-| Standard flow (Authorization Code) | ❌ disabled |
-| Implicit flow | ❌ disabled |
-| **Direct access grants** | ✅ **enabled** (allows `grant_type=password`) |
-| Redirect URIs | not required (no redirect flow) |
-| Web Origins | same hosts as the SPA origin (same-origin in the dev stack) |
+| Propriedade | Valor |
+|-------------|-------|
+| Client type | **Public** (sem secret) |
+| Standard flow (Authorization Code) | ❌ desabilitado |
+| Implicit flow | ❌ desabilitado |
+| **Direct Access Grants** | ✅ **habilitado** (permite `grant_type=password`) |
+| Redirect URIs | não necessárias (não há fluxo de redirect) |
+| Web Origins | mesmos hosts da origem da SPA (same-origin no stack de dev) |
 | Client Scopes | `rumoo-scopes` (roles) + defaults |
 
-> **Public client =** no secret. Its only credential-exchange mechanism is Resource Owner
-> Password Credentials, which the SPA drives from its own Sign-in Form. The credentials stream
-> through browser JavaScript — this is the known, documented trade-off of ROPC (see ADR) and the
-> reason the session is kept strictly in memory.
+> **Client public =** sem secret. Seu único mecanismo de troca de credenciais é o Resource Owner
+> Password Credentials, exercido pela SPA a partir do próprio Sign-in Form. As credenciais
+> trafegam pelo JavaScript do browser — é o trade-off conhecido e documentado do ROPC — e por isso
+> a sessão é mantida estritamente em memória.
 
 #### 4.2.2 `rumoo-backend` (confidential)
 
-For Spring Boot (resource server + future m2m operations).
+Para o Spring Boot (resource server + futuras operações m2m).
 
-| Property | Value |
-|----------|-------|
+| Propriedade | Valor |
+|-------------|-------|
 | Client type | **Confidential** |
-| Standard flow | ❌ (does not log users in) |
-| Service account roles | ✅ enabled (for future m2m/admin calls to Keycloak) |
+| Standard flow | ❌ (não faz login de usuário) |
+| Service account roles | ✅ habilitado (para chamadas m2m/admin futuras ao Keycloak) |
 | Client authentication | Client ID + Secret (env var) |
 | Client Scopes | `rumoo-scopes` (roles) + defaults |
 
-**Role:** validate JWTs (via JWKS) and, when needed, m2m operations (client-credentials grant) —
-e.g., querying realm users/admin.
+**Papel:** validar JWTs (via JWKS) e, quando necessário, operações m2m (grant
+client-credentials) — ex.: consultar usuários/realm admin.
 
 ### 4.3 Client Scope `rumoo-scopes`
 
-A single Client Scope attached to **both** clients for consistent claims:
+Client Scope único anexado aos **dois** clients para garantir claims consistentes:
 
-| Mapper | Type | Claim |
+| Mapper | Tipo | Claim |
 |--------|------|-------|
 | Realm roles | Realm roles | `realm_access.roles` (default) |
 
-> Per **D8**, only **roles** go in the token; **groups** are not exposed as a claim (used for
-> management/role inheritance only).
+> Conforme **D8**, apenas **roles** vão no token; **groups** não são expostos como claim (usados
+> somente para gestão/herança de roles).
 
 ---
 
-## 5. Roles and Groups (authorization model)
+## 5. Roles e Groups (modelo de autorização)
 
-### 5.1 Role of each
+### 5.1 Papel de cada um
 
-- **Role** = atomic permission per action. This is what the **backend authorizes**.
-- **Group** = grouping of users with **hierarchical role inheritance**, for management/organization.
+- **Role** = permissão atômica por ação. É o que o **backend autoriza**.
+- **Group** = agrupamento de usuários com **herança hierárquica de roles**, para
+  gestão/organização.
 
 ```
         group: managers ────────────────► roles: company:create, company:update, ...
-          └── sub-group: regional-managers ─► inherits managers roles + extras
+          └── sub-group: regional-managers ─► herda roles de managers + extras
         group: collaborators ────────────► roles: company:read, ...
 ```
 
-Putting a user in a group grants **all inherited roles** — the backend authorizes only by the
-**resulting roles** in the token.
+Colocar um usuário em um group dá a ele **todas as roles herdadas** — o backend autoriza apenas
+pelas **roles resultantes** no token.
 
-### 5.2 Role catalog (`entity:action`)
+### 5.2 Catálogo de roles (`entidade:acao`)
 
-Granular per-action roles, realm-scoped. Base for the current domain and roadmap:
+Roles granulares por ação, realm-scoped. Base para o domínio atual e roadmap:
 
-| Entity     | Roles |
+| Entidade   | Roles |
 |------------|-------|
 | `company`  | `company:create`, `company:read`, `company:update`, `company:delete` |
 | `goal`     | `goal:create`, `goal:read`, `goal:update`, `goal:delete` *(future)* |
 | `activity` | `activity:create`, `activity:read`, `activity:update`, `activity:delete`, `activity:assign` *(future)* |
 
-**Mapping to current code (reference):**
+**Mapeamento com o código atual (referência):**
 - `CreateCompanyUseCase` → `company:create`
 - `FindCompanyByIdUseCase` → `company:read`
 - `ListCompaniesUseCase` → `company:read`
 - `UpdateCompanyUseCase` → `company:update`
 - `DeleteCompanyUseCase` → `company:delete`
 
-### 5.3 Suggested groups (organization)
+### 5.3 Groups sugeridos (organização)
 
-| Group | Inherited roles | Use |
-|-------|-----------------|-----|
-| `managers` | `company:create`, `company:update`, `company:delete` | Managers |
-| `collaborators` | `company:read` | Collaborators (read access) |
-| `regional-managers` (sub of `managers`) | inherits from `managers` | Future regional delegation |
+| Group | Roles herdadas | Uso |
+|-------|----------------|-----|
+| `managers` | `company:create`, `company:update`, `company:delete` | Gestores |
+| `collaborators` | `company:read` | Colaboradores (apenas leitura) |
+| `regional-managers` (sub de `managers`) | herda de `managers` | Delegação regional futura |
 
-> Tune the group tree as Rumoo's real organizational roles materialize (to define with the product).
-
----
-
-## 6. Backend: JWT Resource Server
-
-- Dependency: `spring-boot-starter-oauth2-resource-server`.
-- Issuer config = `KEYCLOAK_URL/realms/Rumoo`; JWKS for signature validation.
-- Maps `realm_access.roles` → `GrantedAuthority` (`company:create`, etc.).
-- Per-endpoint authorization by the role in the token (e.g., `@PreAuthorize("hasAuthority('company:create')")`).
-- **Stateless**: no session, no per-request Keycloak call.
-- The `rumoo-backend` service account is available for future m2m operations.
-
-> Implementation details (filters/security config, annotations) belong to the implementation
-> phase; this document defines the model.
+> Ajustar a árvore de groups conforme os papéis organizacionais reais do Rumoo (a definir com o
+> produto).
 
 ---
 
-## 7. Security — Zero Trust
+## 6. Backend: Resource Server JWT
 
-- **Everything.** All layers (frontend, backend, Keycloak) require authentication.
-- The **public client** carries no secret; its only grant is Resource Owner Password
-  Credentials, exercised from the SPA.
-- The **backend does not trust the frontend** — it validates the JWT and its roles on every
-  request (least privilege); `401` for unauthenticated requests, `403` for insufficient roles.
-- Confidential client secret only in the backend, via env var, **fail-fast** when absent.
-- **Credentials travel through browser JavaScript** to the Rumoo Realm token endpoint — the
-  known trade-off of ROPC. Mitigations in force: the session lives strictly in memory, the
-  password is never persisted or logged, and the backend independently validates every request.
-- No session data on the client: a page reload returns the user to `/login`.
-- Use TLS in production (HTTPS) for the token exchange and API traffic.
+- Dependência: `spring-boot-starter-oauth2-resource-server`.
+- Configuração do issuer = `KEYCLOAK_URL/realms/Rumoo`; JWKS para validação de assinatura.
+- Converte `realm_access.roles` → `GrantedAuthority` (`company:create`, etc.).
+- Autorização por endpoint pelo papel no token (ex.: `@PreAuthorize("hasAuthority('company:create')")`).
+- **Stateless**: sem sessão, sem chamada ao Keycloak por request.
+- Service account do client `rumoo-backend` disponível para operações m2m futuras.
+
+> Detalhes de implementação (filters/security config, anotações) pertencem à fase de
+> implementação; este documento define o modelo.
 
 ---
 
-## 8. Open questions / pending decisions
+## 7. Segurança — Zero Trust
 
-- Definitive **Groups** tree per product roles.
-- Real **prod domain** and prod `nginx.conf` (route `/auth`).
-- Whether the backend needs **m2m** operations via service account in the first delivery.
-- If per-resource/instance permissions are ever needed (e.g., edit only Company X), evaluate
-  **Keycloak Authorization Services** — **out of scope** in this phase.
+- **Tudo.** Todas as camadas (frontend, backend, Keycloak) exigem autenticação.
+- O **client public** não carrega segredo; seu único grant é o Resource Owner Password
+  Credentials, exercido a partir da SPA.
+- O **backend não confia no frontend** — valida o JWT e suas roles a cada request (menor
+  privilégio); `401` para requisições não autenticadas, `403` para roles insuficientes.
+- Secret do client confidential somente no backend, via env var, **fail-fast** se ausente.
+- **As credenciais trafegam pelo JavaScript do browser** até o token endpoint do Rumoo Realm — o
+  trade-off conhecido do ROPC. Mitigações em vigor: sessão estritamente em memória, senha nunca
+  persistida/logada, e o backend validando independentemente cada request.
+- Sem dados de sessão no cliente: um reload da página devolve o usuário para `/login`.
+- Usar TLS em produção (HTTPS) para a troca de tokens e o tráfego da API.
 
 ---
 
-## 9. Glossary
+## 8. Pendências / decisões em aberto
 
-| Term | Meaning |
-|------|---------|
-| **Realm** | Identity/security domain grouping clients, users, roles, and groups. |
-| **Client** | Application (SPA or backend) requesting authentication/authorization to Keycloak. |
-| **Public client** | Client without a secret (SPA). Uses Direct Access Grants. |
-| **Confidential client** | Client with a secret (backend). May have a service account. |
-| **Sign-in Form** | The SPA-owned credential page (username, password, submit, inline error) that exchanges Resource Owner Password Credentials with the Rumoo Realm. |
-| **Resource Owner Password Credentials (ROPC)** | The `grant_type=password` exchange in which the SPA presents a username and password directly at the token endpoint. |
-| **Role** | Atomic permission per action that the backend authorizes. |
-| **Group** | User grouping with hierarchical role inheritance (organization). |
-| **Scope** | Unit of claims/permissions attachable to clients (e.g., `rumoo-scopes`). |
-| **Claim** | Field inside the JWT. |
-| **JWKS** | Public key set of the issuer for validating JWT signatures. |
+- Árvore definitiva de **Groups** conforme os papéis do produto.
+- Definir **domínio real** de prod e desenhar o `nginx.conf` de prod (rota `/auth`).
+- Decidir se o backend precisará de operações **m2m** via service account já na 1ª entrega.
+- Se surgir necessidade de permissão **por instância/recurso** (ex.: editar só a Empresa X),
+  avaliar **Keycloak Authorization Services** — **fora de escopo** nesta fase.
+
+---
+
+## 9. Glossário
+
+| Termo | Significado |
+|-------|-------------|
+| **Realm** | Domínio de identidade/segurança que agrupa clients, users, roles e groups. |
+| **Client** | Aplicação (SPA ou backend) que solicita autenticação/autorização ao Keycloak. |
+| **Client public** | Client sem segredo (SPA). Usa Direct Access Grants. |
+| **Client confidential** | Client com secret (backend). Pode ter service account. |
+| **Sign-in Form** | A tela de credenciais de posse da SPA (usuário, senha, submit, erro inline) que troca Resource Owner Password Credentials com o Rumoo Realm. |
+| **Resource Owner Password Credentials (ROPC)** | A troca `grant_type=password` na qual a SPA apresenta usuário e senha diretamente no token endpoint. |
+| **Role** | Permissão atômica por ação que o backend autoriza. |
+| **Group** | Agrupamento de usuários com herança hierárquica de roles (organização). |
+| **Scope** | Unidade de claims/permsks associável a clients (ex.: `rumoo-scopes`). |
+| **Claim** | Campo dentro do token JWT. |
+| **JWKS** | Conjunto de chaves públicas do issuer para validar assinatura JWT. |
