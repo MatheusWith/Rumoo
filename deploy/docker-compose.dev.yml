@@ -48,6 +48,9 @@ services:
       context: ../
       dockerfile: frontend/Dockerfile
       target: dev
+    # Angular dev server binds 127.0.0.1 by default; expose it on all
+    # container interfaces so nginx upstream `frontend:4200` can reach it.
+    command: pnpm exec ng serve --host 0.0.0.0
     volumes:
       - ../frontend/src:/app/src
     environment:

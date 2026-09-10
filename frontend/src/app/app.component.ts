@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { KeycloakService } from 'keycloak-angular';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { AuthService } from './core/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -9,17 +9,19 @@ import { KeycloakService } from 'keycloak-angular';
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
-  private readonly keycloakService = inject(KeycloakService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   get isAuthenticated(): boolean {
-    return this.keycloakService.isLoggedIn();
+    return this.authService.isAuthenticated;
   }
 
   login(): void {
-    void this.keycloakService.login();
+    void this.router.navigate(['/login']);
   }
 
   logout(): void {
-    void this.keycloakService.logout(window.location.origin);
+    this.authService.logout();
+    void this.router.navigate(['/login']);
   }
 }
