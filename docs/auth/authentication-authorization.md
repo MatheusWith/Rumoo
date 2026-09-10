@@ -91,24 +91,20 @@ desabilitado — era preciso trocar o mecanismo (grant type).
 
 ## 2. Topologia
 
-```
-                        ┌──────────────────────────────────────────────────┐
-                        │              Domínio (ex.: rumoo.app)            │
-                        │                                                  │
-   Browser / SPA  ───▶  │   nginx (reverse proxy)                          │
-   (Angular)            │     │         │         │                        │
-                        │   /app     /api      /auth                       │
-                        │     │         │         │                        │
-                        │     ▼         ▼         ▼                        │
-                        │  frontend   backend   keycloak                   │
-                        │  (Angular)  (Spring)   (Keycloak)               │
-                        │             :8080                :8080 (int.)   │
-                        └──────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    BROWSER["Browser / SPA (Angular)"] -->|"origem :8080"| NGINX["nginx (reverse proxy)"]
 
-  - /app   → container frontend (Angular estático)
-  - /api   → container backend (Spring Boot resource server)
-  - /auth  → container Keycloak (realm Rumoo)
+    subgraph DOM["Domínio (ex.: rumoo.app)"]
+        NGINX -->|"/ e /app — SPA"| FE["frontend (Angular :4200)"]
+        NGINX -->|"/api/ — API"| BE["backend (Spring :8081)"]
+        NGINX -->|"/auth/ — OIDC"| KC["keycloak (:8080)"]
+    end
 ```
+
+- `/app` → container frontend (Angular estático)
+- `/api` → container backend (Spring Boot resource server)
+- `/auth` → container Keycloak (realm Rumoo)
 
 **Pontos-chave:**
 
@@ -139,21 +135,23 @@ desabilitado — era preciso trocar o mecanismo (grant type).
 
 ### 3.1 Login (Resource Owner Password Credentials)
 
-```
-Usuário                Angular (SPA)              Keycloak            Backend
-   │                        │                       │                   │
-   │ 1. abre /dashboard     │                       │                   │
-   │───────────────────────▶│ guard: sem sessão     │                   │
-   │◀── redirect para /login│                       │                   │
-   │ 2. envia credenciais   │                       │                   │
-   │───────────────────────▶│ 3. POST token         │                   │
-   │                        │  grant_type=password  │                   │
-   │                        │──────────────────────▶│                   │
-   │                        │◀── access/refresh/id tokens ──             │
-   │                        │ 4. sessão em memória  │                   │
-   │ 5. request /api        │                       │                   │
-   │───────────────────────▶│                       │ (Bearer JWT) ────▶│
-   │                        │                       │                   │
+```mermaid
+sequenceDiagram
+    actor U as Usuário
+    participant SPA as Angular (SPA)
+    participant KC as Keycloak (realm Rumoo)
+    participant BE as Backend (Spring)
+
+    U->>SPA: abre /dashboard
+    SPA->>SPA: authGuard: sem sessão
+    SPA-->>U: redirect para /login
+    U->>SPA: envia usuário e senha
+    SPA->>KC: POST no token endpoint /realms/Rumoo/.../token (grant_type=password, client_id, credenciais)
+    KC-->>SPA: access_token + refresh_token (+ id_token)
+    SPA->>SPA: sessão em memória (AuthService)
+    U->>SPA: request /api/**
+    SPA->>BE: GET|POST /api/** com Authorization: Bearer JWT
+    BE-->>SPA: 200 (dados) | 401 (sem token/sessão) | 403 (roles insuficientes)
 ```
 
 1. Um usuário deslogado abre `/dashboard`; o `authGuard` não encontra sessão e redireciona para
@@ -188,13 +186,13 @@ Usuário                Angular (SPA)              Keycloak            Backend
 Toda requisição sai do browser para a origem do nginx (`http://localhost:8080` no dev), que
 roteia pelo path: `/app`/`/` → frontend, `/api/` → backend, `/auth/` → Keycloak.
 
-```
-SPA (browser, origem :8080)
-  │
-  ├─ GET /                     → nginx → frontend (Angular)
-  ├─ POST /auth/.../token      → nginx → keycloak   (login / refresh)
-  ├─ GET|POST /api/**  + Bearer → nginx → backend    (valida JWT via JWKS)
-  └─ logout: somente local (sem end-session)
+```mermaid
+flowchart LR
+    SPA["SPA (browser, origem :8080)"] --> NGINX["nginx"]
+    NGINX -->|"GET / — carregar app"| FE["frontend (Angular)"]
+    NGINX -->|"POST /auth/realms/Rumoo/.../token — login e refresh"| KC["keycloak"]
+    NGINX -->|"GET|POST /api/** com Bearer"| BE["backend (valida JWT via JWKS)"]
+    SPA -.->|"logout: somente local"| SPA
 ```
 
 - **a) Carregar a aplicação.** `GET /` → nginx → `frontend` (Angular dev server :4200). A SPA
@@ -217,6 +215,50 @@ SPA (browser, origem :8080)
   de tokens em memória; `400 invalid_grant` → logout local e navegação para `/login`.
 - **e) Logout.** Somente no cliente: limpa a sessão em memória e navega para `/login`; nenhuma
   requisição de end-session é feita ao Keycloak.
+
+### 3.5 Rotas: protegidas (exigem autenticação) e públicas (não exigem)
+
+O roteador do Angular decide o destino de cada rota com base em guards, que consultam o estado do
+`AuthService`. Resumo:
+
+| Rota | Guard | Exige sessão? | Comportamento |
+|------|-------|---------------|---------------|
+| `/login` | `loginPageGuard` | Não (pública) | deslogado → Sign-in Form; autenticado → `/dashboard` |
+| `/dashboard` | `authGuard` | **Sim** (protegida) | deslogado → `/login`; autenticado → componente |
+| `/` e `**` (catch-all) | redirect → `/dashboard` (que aplica o `authGuard`) | — | resolve para `/dashboard` ou `/login` conforme a sessão |
+| `/api/**` (chamadas da SPA) | interceptor + backend | **Sim** (Bearer) | sem token/vencido → `401`; roles insuficientes → `403` |
+| `/auth/**` (token endpoint) | — | Não (troca de credenciais) | acessível pela mesma origem do nginx |
+
+**Exemplo — rota protegida (`/dashboard` exige autenticação):**
+
+```mermaid
+flowchart TD
+    A["Usuário abre /dashboard"] --> B{authGuard: autenticado?}
+    B -->|"sim"| C["/dashboard — componente carrega e chama /api/** com Bearer"]
+    B -->|"não"| D["redirect → /login (Sign-in Form)"]
+```
+
+**Exemplo — rota pública (`/login` não exige autenticação):**
+
+```mermaid
+flowchart TD
+    P["Usuário abre /login"] --> G{loginPageGuard: autenticado?}
+    G -->|"não"| H["/login — Sign-in Form renderizado (sem token necessário)"]
+    G -->|"sim"| I["redirect → /dashboard (evita re-login)"]
+```
+
+**Rota raiz / catch-all:**
+
+```mermaid
+flowchart TD
+    R["Usuário abre / ou URL desconhecida"] --> S["redirect → /dashboard"]
+    S --> T{authGuard: autenticado?}
+    T -->|"sim"| U["/dashboard"]
+    T -->|"não"| V["/login"]
+```
+
+> Regra prática: **nada protegido é renderizado sem sessão** — o guard barra a rota antes do
+> componente, e o backend rejeita (`401`) qualquer chamada `/api/**` sem token válido.
 
 ---
 
@@ -288,10 +330,14 @@ Client Scope único anexado aos **dois** clients para garantir claims consistent
 - **Group** = agrupamento de usuários com **herança hierárquica de roles**, para
   gestão/organização.
 
-```
-        group: managers ────────────────► roles: company:create, company:update, ...
-          └── sub-group: regional-managers ─► herda roles de managers + extras
-        group: collaborators ────────────► roles: company:read, ...
+```mermaid
+flowchart TD
+    M["group: managers"] --> ROLE1["company:create"]
+    M --> ROLE2["company:update"]
+    M --> ROLE3["… (outras roles de gestão)"]
+    RM["sub-group: regional-managers"] --> M
+    RM --> ROLE4["+ extras"]
+    C["group: collaborators"] --> ROLE5["company:read"]
 ```
 
 Colocar um usuário em um group dá a ele **todas as roles herdadas** — o backend autoriza apenas
