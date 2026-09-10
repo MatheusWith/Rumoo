@@ -183,6 +183,41 @@ Usuário                Angular (SPA)              Keycloak            Backend
 - **Não há chamada de end-session (OIDC)**: com o fluxo de redirect removido, o Keycloak não fica
   sabendo do logout da SPA (perda do logout SSO global — consequência documentada da decisão ROPC).
 
+### 3.4 Fluxo de requisições HTTP (ponta a ponta)
+
+Toda requisição sai do browser para a origem do nginx (`http://localhost:8080` no dev), que
+roteia pelo path: `/app`/`/` → frontend, `/api/` → backend, `/auth/` → Keycloak.
+
+```
+SPA (browser, origem :8080)
+  │
+  ├─ GET /                     → nginx → frontend (Angular)
+  ├─ POST /auth/.../token      → nginx → keycloak   (login / refresh)
+  ├─ GET|POST /api/**  + Bearer → nginx → backend    (valida JWT via JWKS)
+  └─ logout: somente local (sem end-session)
+```
+
+- **a) Carregar a aplicação.** `GET /` → nginx → `frontend` (Angular dev server :4200). A SPA
+  carrega a rota inicial e o guard decide: autenticado → `/dashboard`; deslogado → `/login`.
+- **b) Login (troca de credenciais).** `POST /auth/realms/Rumoo/protocol/openid-connect/token`
+  (nginx roteia `/auth/` → keycloak), corpo `application/x-www-form-urlencoded`:
+  - `grant_type=password`
+  - `client_id=rumoo-frontend`
+  - `username` + `password`
+  - Respostas: `200` → `{ access_token, refresh_token, id_token, expires_in }` (sessão em memória);
+    `400`/`401 invalid_grant` → erro inline no Sign-in Form.
+- **c) Requisição autenticada à API.** `GET|POST /api/**` com header
+  `Authorization: Bearer <access_token>` (nginx roteia `/api/` → backend). O interceptor anexa o
+  Bearer apenas em `/api/**`; as demais URLs passam intactas. O backend (stateless) valida em cada
+  request: assinatura (JWKS) + issuer + expiração → ausente/inválido = `401`; token válido com
+  roles insuficientes = `403`; ok = `200`. Um único `401` dispara um refresh forçado e um retry;
+  falha repetida encerra a sessão e volta para `/login`.
+- **d) Refresh preventivo.** `POST /auth/realms/Rumoo/protocol/openid-connect/token` com
+  `grant_type=refresh_token`, `client_id=rumoo-frontend` e `refresh_token`. `200` → atualiza o par
+  de tokens em memória; `400 invalid_grant` → logout local e navegação para `/login`.
+- **e) Logout.** Somente no cliente: limpa a sessão em memória e navega para `/login`; nenhuma
+  requisição de end-session é feita ao Keycloak.
+
 ---
 
 ## 4. Configuração no Keycloak
