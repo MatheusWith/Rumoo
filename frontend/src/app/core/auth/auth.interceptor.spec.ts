@@ -14,7 +14,7 @@ describe('authInterceptor', () => {
     isAuthenticated: boolean;
     accessToken: string | null;
     hasRefreshToken: boolean;
-    refreshIfNeeded: jasmine.Spy;
+    restoreSession: jasmine.Spy;
     logout: jasmine.Spy;
   };
   let get: (url: string) => Promise<unknown>;
@@ -38,7 +38,7 @@ describe('authInterceptor', () => {
       isAuthenticated: true,
       accessToken: 'token-123',
       hasRefreshToken: true,
-      refreshIfNeeded: jasmine.createSpy('refreshIfNeeded').and.returnValue(Promise.resolve(true)),
+      restoreSession: jasmine.createSpy('restoreSession').and.returnValue(Promise.resolve(true)),
       logout: jasmine.createSpy('logout'),
     };
     setup();
@@ -59,7 +59,7 @@ describe('authInterceptor', () => {
     const promise = get('/api/companies');
     await Promise.resolve();
     const req = httpMock.expectOne((candidate) => candidate.url.includes('/api/companies'));
-    expect(authMock.refreshIfNeeded).toHaveBeenCalled();
+    expect(authMock.restoreSession).toHaveBeenCalled();
     req.flush({});
     await promise;
   });
@@ -91,7 +91,7 @@ describe('authInterceptor', () => {
     first.flush('', { status: 401, statusText: 'Unauthorized' });
     await Promise.resolve();
 
-    expect(authMock.refreshIfNeeded).toHaveBeenCalledWith(true);
+    expect(authMock.restoreSession).toHaveBeenCalledWith(true);
     expect(authMock.logout).not.toHaveBeenCalled();
 
     await Promise.resolve();
@@ -121,11 +121,11 @@ describe('authInterceptor', () => {
       error = e;
     }
     expect(error).toBeInstanceOf(HttpErrorResponse);
-    expect(authMock.refreshIfNeeded).toHaveBeenCalledWith(true);
+    expect(authMock.restoreSession).toHaveBeenCalledWith(true);
   });
 
   it('should end the session when the forced refresh fails and not retry', async () => {
-    authMock.refreshIfNeeded.and.returnValues(Promise.resolve(true), Promise.resolve(false));
+    authMock.restoreSession.and.returnValues(Promise.resolve(true), Promise.resolve(false));
     const promise = get('/api/companies');
     await Promise.resolve();
 
@@ -141,7 +141,7 @@ describe('authInterceptor', () => {
       error = e;
     }
     expect(error).toBeInstanceOf(HttpErrorResponse);
-    expect(authMock.refreshIfNeeded).toHaveBeenCalledWith(true);
+    expect(authMock.restoreSession).toHaveBeenCalledWith(true);
   });
 
   it('should pass through internal errors untouched', async () => {
@@ -157,7 +157,7 @@ describe('authInterceptor', () => {
       error = e;
     }
     expect(error).toBeInstanceOf(HttpErrorResponse);
-    expect(authMock.refreshIfNeeded).not.toHaveBeenCalledWith(true);
+    expect(authMock.restoreSession).not.toHaveBeenCalledWith(true);
     expect(authMock.logout).not.toHaveBeenCalled();
   });
 });

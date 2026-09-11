@@ -5,8 +5,11 @@ import { authGuard, loginPageGuard } from './auth.guard';
 
 class DummyComponent {}
 
-function setup(authenticated: boolean) {
-  const authMock = { isAuthenticated: authenticated };
+function setup(authenticated: boolean, restored = false) {
+  const authMock = {
+    isAuthenticated: authenticated,
+    restoreSession: jasmine.createSpy('restoreSession').and.returnValue(Promise.resolve(restored)),
+  };
   TestBed.configureTestingModule({
     providers: [
       provideRouter([
@@ -22,13 +25,20 @@ function setup(authenticated: boolean) {
 }
 
 describe('authGuard', () => {
-  it('should allow navigation when authenticated', async () => {
-    const { router } = setup(true);
+  it('should allow navigation when authenticated without restoring', async () => {
+    const { router, authMock } = setup(true);
     expect(await router.navigate(['dashboard'])).toBe(true);
+    expect(authMock.restoreSession).not.toHaveBeenCalled();
   });
 
-  it('should redirect to login when anonymous', async () => {
-    const { router } = setup(false);
+  it('should restore the session and allow navigation when it succeeds', async () => {
+    const { router } = setup(false, true);
+    expect(await router.navigate(['dashboard'])).toBe(true);
+    expect(router.url).toBe('/dashboard');
+  });
+
+  it('should redirect to login when anonymous and the session cannot be restored', async () => {
+    const { router } = setup(false, false);
     expect(await router.navigate(['dashboard'])).toBe(true);
     expect(router.url).toBe('/login');
   });

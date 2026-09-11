@@ -21,7 +21,7 @@ function authorized(
   next: HttpHandlerFn,
   attempt: number
 ): Observable<HttpEvent<unknown>> {
-  return from(auth.refreshIfNeeded()).pipe(
+  return from(auth.restoreSession()).pipe(
     switchMap((ok) => {
       if (!ok || !auth.isAuthenticated) {
         return next(req);
@@ -49,7 +49,7 @@ function retryOnUnauthorized(
     return throwError(() => error);
   }
 
-  return from(auth.refreshIfNeeded(true)).pipe(
+  return from(auth.restoreSession(true)).pipe(
     switchMap((refreshed) => {
       if (!refreshed) {
         void router.navigate(['/login']);

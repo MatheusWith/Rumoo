@@ -1,31 +1,11 @@
-<form (ngSubmit)="onSubmit()" novalidate>
+<div class="flex flex-col items-center gap-4 pt-16">
   <h2 class="title">Sign in to Rumoo</h2>
-
-  <label for="username">Username</label>
-  <input
-    id="username"
-    name="username"
-    type="text"
-    autocomplete="username"
-    [value]="username"
-    (input)="onUsernameInput($any($event.target).value)"
-  />
-
-  <label for="password">Password</label>
-  <input
-    id="password"
-    name="password"
-    type="password"
-    autocomplete="current-password"
-    [value]="password"
-    (input)="onPasswordInput($any($event.target).value)"
-  />
-
-  @if (error(); as message) {
-    <p class="error" role="alert">{{ message }}</p>
-  }
-
-  <button type="submit" [disabled]="submitting()">
-    {{ submitting() ? 'Signing in…' : 'Sign in' }}
+  <button
+    type="button"
+    (click)="onSignIn()"
+    [disabled]="signingIn()"
+    class="rounded bg-gray-800 px-4 py-2 text-white"
+  >
+    {{ signingIn() ? 'Redirecting…' : 'Sign in with Keycloak' }}
   </button>
-</form>
+</div>
