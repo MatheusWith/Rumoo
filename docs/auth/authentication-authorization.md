@@ -20,7 +20,7 @@ Direct Access Grants)**. ROPC is gone. Timeline:
 | **Local** logout (clears in-memory session; Keycloak unaware) | **OIDC end-session** logout with `id_token_hint` — ends the realm global session, then returns to `/login` |
 | Direct Access Grants enabled on `rumoo-frontend` | `rumoo-frontend` with **Standard Flow only**; Direct Access Grants **disabled** |
 | Redirections not required | **Redirect URIs** and **post-logout URIs** configured (exact `/callback` + `/login` origin) |
-| Refresh without replay protection | **Refresh Token Rotation with replay detection** (realm-level, `revokeRefreshToken` + `refreshTokenMaxReuse`), 12-hour refresh token |
+| Refresh without replay protection | **Refresh Token Rotation with replay detection** (realm-level, `revokeRefreshToken` + `refreshTokenMaxReuse`) |
 
 The rationale for returning to the redirect flow is recorded in `docs/adr/0002-authorization-code-pkce.md`.
 The backend is untouched: it remains a stateless resource server validating the same
@@ -47,7 +47,7 @@ Consolidated decisions:
 | D11 | Refresh | automatic by `AuthService` (`grant_type=refresh_token`, **single-flight**) before the Access Token expires |
 | D12 | Session persistence | **`sessionStorage`**, tab-scoped; restored on load (reload-safe, fresh login per tab) |
 | D13 | PKCE | S256 challenge derived from a random **code_verifier**; **state** (CSRF) and **nonce** (id_token binding) held in `sessionStorage` during the flow |
-| D14 | Refresh token lifetime | **12 h** (`refreshTokenLifespan=43200`), with **rotation + replay detection** (`revokeRefreshToken=true`, `refreshTokenMaxReuse=0`) |
+| D14 | Refresh token lifecycle | **Rotation + replay detection** (`revokeRefreshToken=true`, `refreshTokenMaxReuse=0`); refresh token lifetime follows Keycloak defaults (the 26.7 realm model exports no `refreshTokenLifespan`) |
 
 ### 1.1 Decisions removed with ROPC (do not resurrect)
 
@@ -273,7 +273,6 @@ flowchart TD
 | Item | Value |
 |------|-------|
 | Realm name | `Rumoo` |
-| Refresh token lifespan | `43200` (12 h) |
 | Revoke refresh token (rotation) | `true` |
 | Refresh token max reuse (replay detection) | `0` |
 

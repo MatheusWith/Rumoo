@@ -9,7 +9,6 @@
   "bruteForceProtected": true,
   "sslRequired": "external",
   "accessTokenLifespan": 300,
-  "refreshTokenLifespan": 43200,
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0,
   "ssoSessionIdleTimeout": 1800,
