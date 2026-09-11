@@ -334,7 +334,7 @@ describe('AuthService', () => {
       const decoded = decodeURIComponent(url);
       expect(decoded).toContain('client_id=rumoo-frontend');
       expect(decoded).toContain('id_token_hint=id-1');
-      expect(decoded).toContain('post_logout_redirect_uri=http://localhost:8080/login');
+      expect(decoded).toContain('post_logout_redirect_uri=http://localhost:8080/');
     });
 
     it('should still redirect to the end-session endpoint when no id_token is available', async () => {

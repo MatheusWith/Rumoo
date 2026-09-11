@@ -151,7 +151,7 @@ export class AuthService {
 
     const params = new URLSearchParams({
       client_id: environment.keycloak.clientId,
-      post_logout_redirect_uri: `${this.windowRef.location.origin}/login`,
+      post_logout_redirect_uri: `${this.windowRef.location.origin}/`,
     });
     if (idToken !== null) {
       params.set('id_token_hint', idToken);

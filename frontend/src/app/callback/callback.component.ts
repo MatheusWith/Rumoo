@@ -1,10 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 
 @Component({
   selector: 'app-callback',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './callback.component.html',
   styleUrl: './callback.component.scss',
 })
@@ -31,5 +31,9 @@ export class CallbackComponent implements OnInit {
     } catch {
       this.failed.set(true);
     }
+  }
+
+  retry(): void {
+    void this.auth.startLogin();
   }
 }

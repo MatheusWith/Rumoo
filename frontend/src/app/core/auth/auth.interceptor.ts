@@ -6,7 +6,6 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { catchError, from, Observable, switchMap, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 
@@ -16,7 +15,6 @@ function isApiRequest(req: HttpRequest<unknown>): boolean {
 
 function authorized(
   auth: AuthService,
-  router: Router,
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   attempt: number
@@ -31,15 +29,12 @@ function authorized(
       });
       return next(authorizedRequest);
     }),
-    catchError((error: HttpErrorResponse) =>
-      retryOnUnauthorized(auth, router, req, next, attempt, error)
-    )
+    catchError((error: HttpErrorResponse) => retryOnUnauthorized(auth, req, next, attempt, error))
   );
 }
 
 function retryOnUnauthorized(
   auth: AuthService,
-  router: Router,
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   attempt: number,
@@ -52,20 +47,19 @@ function retryOnUnauthorized(
   return from(auth.restoreSession(true)).pipe(
     switchMap((refreshed) => {
       if (!refreshed) {
-        void router.navigate(['/login']);
+        void auth.startLogin();
         return throwError(() => error);
       }
-      return authorized(auth, router, req, next, attempt + 1);
+      return authorized(auth, req, next, attempt + 1);
     })
   );
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  const router = inject(Router);
 
   if (!isApiRequest(req)) {
     return next(req);
   }
-  return authorized(auth, router, req, next, 0);
+  return authorized(auth, req, next, 0);
 };

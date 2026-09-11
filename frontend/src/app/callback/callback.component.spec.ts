@@ -9,11 +9,12 @@ import { CallbackComponent } from './callback.component';
 class DummyComponent {}
 
 describe('CallbackComponent', () => {
-  let authMock: { completeLogin: jasmine.Spy };
+  let authMock: { completeLogin: jasmine.Spy; startLogin: jasmine.Spy };
 
   beforeEach(async () => {
     authMock = {
       completeLogin: jasmine.createSpy('completeLogin').and.returnValue(Promise.resolve()),
+      startLogin: jasmine.createSpy('startLogin').and.returnValue(Promise.resolve()),
     };
     await TestBed.configureTestingModule({
       imports: [CallbackComponent],
@@ -61,5 +62,16 @@ describe('CallbackComponent', () => {
 
     expect(harness.routeNativeElement?.textContent).toContain('Sign-in failed');
     expect(authMock.completeLogin).not.toHaveBeenCalled();
+  });
+
+  it('should restart Keycloak login when the user retries after a failure', async () => {
+    authMock.completeLogin.and.returnValue(Promise.reject(new Error('invalid_grant')));
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/callback?code=abc&state=xyz');
+    await harness.fixture.whenStable();
+
+    (harness.routeNativeElement as HTMLElement).querySelector('button')?.click();
+
+    expect(authMock.startLogin).toHaveBeenCalledTimes(1);
   });
 });

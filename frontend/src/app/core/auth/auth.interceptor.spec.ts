@@ -16,6 +16,7 @@ describe('authInterceptor', () => {
     hasRefreshToken: boolean;
     restoreSession: jasmine.Spy;
     logout: jasmine.Spy;
+    startLogin: jasmine.Spy;
   };
   let get: (url: string) => Promise<unknown>;
 
@@ -40,6 +41,7 @@ describe('authInterceptor', () => {
       hasRefreshToken: true,
       restoreSession: jasmine.createSpy('restoreSession').and.returnValue(Promise.resolve(true)),
       logout: jasmine.createSpy('logout'),
+      startLogin: jasmine.createSpy('startLogin').and.returnValue(Promise.resolve()),
     };
     setup();
   });
@@ -142,6 +144,7 @@ describe('authInterceptor', () => {
     }
     expect(error).toBeInstanceOf(HttpErrorResponse);
     expect(authMock.restoreSession).toHaveBeenCalledWith(true);
+    expect(authMock.startLogin).toHaveBeenCalledTimes(1);
   });
 
   it('should pass through internal errors untouched', async () => {

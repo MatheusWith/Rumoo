@@ -15,11 +15,11 @@ Direct Access Grants)**. ROPC is gone. Timeline:
 | Before (removed flow) | After (current flow) |
 |-----------------------|----------------------|
 | Login on the **SPA-owned page** (**Sign-in Form**), exchanging credentials at the token endpoint (`grant_type=password`) | Login redirecting to the **Keycloak-hosted page** (`authorize` + PKCE) |
-| No session check on load — a signed-out user goes to `/login` | **Session restore on load**: the SPA hydrates the session from `sessionStorage` and proactively refreshes |
+| No session check on load — a signed-out user lands on the SPA's Sign-in page | **Session restore on load**: the SPA hydrates the session from `sessionStorage`; a signed-out user is redirected straight to the **Keycloak-hosted login page** |
 | In-memory session lost on reload | Session **persists across reloads** in `sessionStorage` |
-| **Local** logout (clears in-memory session; Keycloak unaware) | **OIDC end-session** logout with `id_token_hint` — ends the realm global session, then returns to `/login` |
+| **Local** logout (clears in-memory session; Keycloak unaware) | **OIDC end-session** logout with `id_token_hint` — ends the realm global session, then returns to the app root, which restarts the Keycloak login |
 | Direct Access Grants enabled on `rumoo-frontend` | `rumoo-frontend` with **Standard Flow only**; Direct Access Grants **disabled** |
-| Redirections not required | **Redirect URIs** and **post-logout URIs** configured (exact `/callback` + `/login` origin) |
+| Redirections not required | **Redirect URIs** and **post-logout URIs** configured (exact `/callback`; post-logout origin root) |
 | Refresh without replay protection | **Refresh Token Rotation with replay detection** (realm-level, `revokeRefreshToken` + `refreshTokenMaxReuse`) |
 
 The rationale for returning to the redirect flow is recorded in `docs/adr/0002-authorization-code-pkce.md`.
@@ -43,7 +43,7 @@ Consolidated decisions:
 | D7 | Authorization model | **Roles = granular permissions**; **Groups = organization + role inheritance** |
 | D8 | Token content | **realm roles** in the token (via `realm_access.roles`); groups **not** in the token (management only) |
 | D9 | Role granularity | **`entity:action`** (e.g. `company:create`) |
-| D10 | Logout | **OIDC end-session** (`id_token_hint` + `client_id` + `post_logout_redirect_uri`) — ends the realm global session, then `/login` |
+| D10 | Logout | **OIDC end-session** (`id_token_hint` + `client_id` + `post_logout_redirect_uri`) — ends the realm global session, then the app root restarts the Keycloak login |
 | D11 | Refresh | automatic by `AuthService` (`grant_type=refresh_token`, **single-flight**) before the Access Token expires |
 | D12 | Session persistence | **`sessionStorage`**, tab-scoped; restored on load (reload-safe, fresh login per tab) |
 | D13 | PKCE | S256 challenge derived from a random **code_verifier**; **state** (CSRF) and **nonce** (id_token binding) held in `sessionStorage` during the flow |
@@ -70,13 +70,13 @@ flowchart TD
     BROWSER["Browser / SPA (Angular)"] -->|"origin :8080"| NGINX["nginx (reverse proxy)"]
 
     subgraph DOM["Domain (e.g. rumoo.app)"]
-        NGINX -->|"/, /login, /dashboard, /callback — SPA"| FE["frontend (Angular :4200)"]
+        NGINX -->|"/, /dashboard, /callback — SPA"| FE["frontend (Angular :4200)"]
         NGINX -->|"/api/ — API"| BE["backend (Spring :8081)"]
         NGINX -->|"/auth/ — OIDC"| KC["keycloak (:8080)"]
     end
 ```
 
-- `/`, `/login`, `/callback`, `/dashboard` → frontend container (Angular)
+- `/`, `/callback`, `/dashboard` → frontend container (Angular)
 - `/api/**` → backend container (Spring Boot resource server)
 - `/auth/**` → Keycloak container (realm Rumoo)
 
@@ -140,17 +140,17 @@ sequenceDiagram
 ```
 
 1. A signed-out user opens `/dashboard`; the `authGuard` finds no session and no stored session
-   and redirects to `/login`.
-2. The user clicks **Sign in**; the `AuthService` generates the **PKCE pair** (random
-   `code_verifier`, its **S256 code_challenge**), a **state**, and a **nonce**, stores them in
-   `sessionStorage`, and redirects to the **Keycloak authorize endpoint**.
+   and calls `startLogin()`, redirecting the browser to the **Keycloak-hosted login page** — there
+   is no SPA-owned sign-in screen.
+2. `startLogin()` generates the **PKCE pair** (random `code_verifier`, its **S256 code_challenge**),
+   a **state**, and a **nonce**, stores them in `sessionStorage`, and redirects to the **Keycloak
+   authorize endpoint**.
 3. Keycloak renders its **hosted login page**; on success it redirects the browser back to
    `/callback?code=…&state=…` (exact redirect URI).
 4. The callback route validates the returned **state** against the stored one (CSRF), then
    exchanges the **code** + **code_verifier** at the token endpoint (`grant_type=authorization_code`).
 5. On success the token set (access + refresh + id) is held in `sessionStorage` (tab-scoped) and
-   the app navigates to `/dashboard`. An authenticated user opening `/login` is redirected to
-   `/dashboard`.
+   the app navigates to `/dashboard`.
 6. From then on, the interceptor attaches `Authorization: Bearer <access_token>` to `/api/**`
    requests.
 
@@ -176,7 +176,8 @@ sequenceDiagram
 - **Refresh** is `grant_type=refresh_token`, **single-flight** (concurrent calls share one in-flight
   request). The realm is configured with **Refresh Token Rotation + replay detection**: every refresh
   mints a new refresh token and the old one is revoked (`refreshTokenMaxReuse=0`).
-- A rejected refresh (e.g. revoked/expired) clears the session and returns to `/login`.
+- A rejected refresh (e.g. revoked/expired) clears the session and restarts the Keycloak login
+  (`startLogin()`).
 - A single `401` from the API triggers one **forced** refresh and one retry of the failed request;
   repeated failure ends the session.
 
@@ -184,9 +185,9 @@ sequenceDiagram
 
 - Logout clears the local session (**`rumoo.auth.*`** in `sessionStorage`) and redirects to the
   Keycloak **end-session endpoint** with `id_token_hint`, `client_id`, and
-  `post_logout_redirect_uri=/login` — this **ends the realm global (SSO) session** and lands the
-  user back on the Sign-in page. If no `id_token` is available, the end-session redirect still takes
-  place without the hint.
+  `post_logout_redirect_uri` pointing at the app root (`http://localhost:8080/` in dev) — this
+  **ends the realm global (SSO) session**, and the app root then restarts the Keycloak login. If no
+  `id_token` is available, the end-session redirect still takes place without the hint.
 
 ### 3.5 HTTP request flow (end to end)
 
@@ -203,8 +204,9 @@ flowchart LR
     NGINX -->|"GET /auth/realms/Rumoo/.../logout — end-session"| KC
 ```
 
-- **a) Load the application.** `GET /` (or `/login`) → nginx → frontend. The SPA hydrates the
-  session from `sessionStorage`; the guard then allows (authenticated) or shows `/login`.
+- **a) Load the application.** `GET /` → nginx → frontend. The SPA hydrates the session from
+  `sessionStorage`; the guard then allows navigation (authenticated) or calls `startLogin()`,
+  redirecting to the Keycloak login page.
 - **b) Login.** `startLogin()` redirects to
   `GET /auth/realms/Rumoo/protocol/openid-connect/auth` with `response_type=code`,
   `client_id=rumoo-frontend`, `redirect_uri=http://localhost:8080/callback`, `scope` (incl.
@@ -213,7 +215,8 @@ flowchart LR
 - **c) Code exchange.** `POST /auth/realms/Rumoo/protocol/openid-connect/token`, body
   `application/x-www-form-urlencoded`: `grant_type=authorization_code`, `client_id`,
   `code`, `redirect_uri`, `code_verifier`. `200` → token set stored in `sessionStorage`;
-  `400 invalid_grant` → Sign-in fails on `/callback` (inline error, link back to `/login`).
+  `400 invalid_grant` → Sign-in fails on `/callback` (inline error + **Try again**, which restarts
+  `startLogin()`).
 - **d) Authenticated API request.** `GET|POST /api/**` with `Authorization: Bearer <access_token>`
   (interceptor attaches only to `/api/**`). The backend (stateless) validates every request:
   signature (JWKS) + issuer + expiry → missing/invalid = `401`; valid token with insufficient roles
@@ -221,9 +224,10 @@ flowchart LR
   retry; repeated failure ends the session.
 - **e) Proactive/proactive refresh.** `POST /auth/realms/Rumoo/protocol/openid-connect/token` with
   `grant_type=refresh_token`, `client_id`, `refresh_token`. `200` → rotated token pair persisted;
-  `400 invalid_grant` → session cleared → `/login`.
-- **f) Logout.** `GET /auth/realms/Rumoo/protocol/openid-connect/logout?client_id=…&id_token_hint=…&post_logout_redirect_uri=http://localhost:8080/login`
-  (URL-encoded) → Keycloak ends the global session and redirects to `/login`.
+  `400 invalid_grant` → session cleared, Keycloak login restarted.
+- **f) Logout.** `GET /auth/realms/Rumoo/protocol/openid-connect/logout?client_id=…&id_token_hint=…&post_logout_redirect_uri=http://localhost:8080/`
+  (URL-encoded) → Keycloak ends the global session and redirects to the app root, which restarts
+  the Keycloak login.
 
 ### 3.6 Routes: protected (require authentication) and public (do not)
 
@@ -232,10 +236,9 @@ The Angular router decides the destination of each route through guards that rea
 
 | Route | Guard | Requires session? | Behavior |
 |-------|-------|-------------------|----------|
-| `/login` | `loginPageGuard` | No (public) | signed out → Sign-in button (starts PKCE); authenticated → `/dashboard` |
-| `/callback` | — | No (public) | exchanges the authorization code; on failure shows the sign-in error |
-| `/dashboard` | `authGuard` | **Yes** (protected) | signed out → `/login`; authenticated → component |
-| `/` and `**` (catch-all) | redirect → `/dashboard` (which applies `authGuard`) | — | resolves to `/dashboard` or `/login` depending on the session |
+| `/callback` | — | No (public) | exchanges the authorization code; on failure shows the sign-in error with **Try again** |
+| `/dashboard` | `authGuard` | **Yes** (protected) | signed out → `startLogin()` (redirect to the Keycloak login page); authenticated → component |
+| `/` and `**` (catch-all) | redirect → `/dashboard` (which applies `authGuard`) | — | resolves to `/dashboard` or restarts the Keycloak login depending on the session |
 | `/api/**` (SPA calls) | interceptor + backend | **Yes** (Bearer) | no token/expired → `401`; insufficient roles → `403` |
 | `/auth/**` (OIDC endpoints) | — | No | reachable through the same nginx origin |
 
@@ -245,20 +248,17 @@ The Angular router decides the destination of each route through guards that rea
 flowchart TD
     A["User opens /dashboard"] --> B{authGuard: session restored or refreshed?}
     B -->|"yes"| C["/dashboard — component loads and calls /api/** with Bearer"]
-    B -->|"no"| D["redirect → /login (Sign-in button)"]
+    B -->|"no"| D["startLogin() → Keycloak-hosted login page"]
 ```
 
-**Example — public routes (`/login` and `/callback` do not require authentication):**
+**Example — the public route (`/callback` does not require authentication):**
 
 ```mermaid
 flowchart TD
-    L["User opens /login"] --> LG{loginPageGuard: authenticated?}
-    LG -->|"no"| LH["/login — Sign-in button starts PKCE"]
-    LG -->|"yes"| LD["redirect → /dashboard"]
     C["Keycloak redirects to /callback?code&state"] --> CL["exchange code + verifier"]
     CL --> CS{"state valid?"}
     CS -->|"yes"| CD["tokens stored → /dashboard"]
-    CS -->|"no / error"| CE["Sign-in failed → link to /login"]
+    CS -->|"no / error"| CE["Sign-in failed → Try again restarts startLogin()"]
 ```
 
 > Rule of thumb: **nothing protected is rendered without a session** — the guard blocks the route
