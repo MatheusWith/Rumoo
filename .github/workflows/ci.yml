@@ -60,7 +60,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prepare environment
-        run: cp src/environments/environment.template.ts src/environments/environment.ts
+        run: |
+          sed -e 's|{{KEYCLOAK_URL}}|http://localhost:8080/auth|' \
+              -e 's|{{KEYCLOAK_REALM}}|Rumoo|' \
+              -e 's|{{KEYCLOAK_CLIENT_ID}}|rumoo-frontend|' \
+              src/environments/environment.template.ts > src/environments/environment.ts
 
       - name: Lint
         run: pnpm run lint
