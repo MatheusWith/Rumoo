@@ -1,9 +1,12 @@
+import { Component } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AuthService } from '../core/auth/auth.service';
 import { CallbackComponent } from './callback.component';
-import { DummyComponent } from './dummy.component';
+
+@Component({ selector: 'app-dummy', template: '', imports: [] })
+class DummyComponent {}
 
 describe('CallbackComponent', () => {
   let authMock: { completeLogin: jasmine.Spy };
