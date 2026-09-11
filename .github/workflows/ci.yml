@@ -59,8 +59,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prepare environment
+        run: |
+          sed -e 's|{{KEYCLOAK_URL}}|http://localhost:8080/auth|' \
+              -e 's|{{KEYCLOAK_REALM}}|Rumoo|' \
+              -e 's|{{KEYCLOAK_CLIENT_ID}}|rumoo-frontend|' \
+              src/environments/environment.template.ts > src/environments/environment.ts
+
       - name: Lint
         run: pnpm run lint
 
       - name: Format check
         run: pnpm run format:check
+
+      - name: Test
+        run: pnpm exec ng test --watch=false

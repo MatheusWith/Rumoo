@@ -1,0 +1,6 @@
+@if (failed()) {
+  <p class="error">Sign-in failed. Please try again.</p>
+  <button type="button" (click)="retry()">Try again</button>
+} @else {
+  <p>Signing you in…</p>
+}

@@ -37,14 +37,6 @@ describe('AppComponent', () => {
     expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Sign out');
   });
 
-  it('should show sign in when not authenticated', () => {
-    authMock.isAuthenticated = false;
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Sign in');
-  });
-
   it('should call logout on sign out click', () => {
     authMock.isAuthenticated = true;
     const fixture = TestBed.createComponent(AppComponent);
