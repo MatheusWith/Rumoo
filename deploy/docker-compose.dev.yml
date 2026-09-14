@@ -5,6 +5,27 @@
 #   docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up
 # works. Run from this directory (./.env provides DB_PASSWORD etc.).
 services:
+  seed:
+    build:
+      context: ./seed
+    restart: "no"
+    environment:
+      PGHOST: postgres
+      PGDATABASE: rumoo
+      PGUSER: ${DB_USERNAME:-rumoo}
+      PGPASSWORD: ${DB_PASSWORD}
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-Rumoo}
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      SEED_PASSWORD: ${SEED_PASSWORD:-Password123!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
   nginx:
     image: nginx:alpine
     ports:
