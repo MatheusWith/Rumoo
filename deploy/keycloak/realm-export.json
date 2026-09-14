@@ -46,6 +46,26 @@
         "composite": false
       },
       {
+        "name": "collaborator:create",
+        "description": "Create collaborators",
+        "composite": false
+      },
+      {
+        "name": "collaborator:read",
+        "description": "Read collaborators",
+        "composite": false
+      },
+      {
+        "name": "collaborator:update",
+        "description": "Update collaborators",
+        "composite": false
+      },
+      {
+        "name": "collaborator:delete",
+        "description": "Delete collaborators",
+        "composite": false
+      },
+      {
         "name": "admin",
         "description": "Rumoo administrator",
         "composite": true,
@@ -54,7 +74,11 @@
             "company:create",
             "company:read",
             "company:update",
-            "company:delete"
+            "company:delete",
+            "collaborator:create",
+            "collaborator:read",
+            "collaborator:update",
+            "collaborator:delete"
           ]
         }
       },
@@ -64,7 +88,8 @@
         "composite": true,
         "composites": {
           "realm": [
-            "company:read"
+            "company:read",
+            "collaborator:read"
           ]
         }
       }
