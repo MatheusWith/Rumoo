@@ -40,21 +40,12 @@ tools when a token changes.
 Legend: every *state* and *interactive* token is required to hit the column it
 is listed under; decorative-only tokens have no ratio obligation.
 
-## Measurement toolchain (document for the team)
+## Measurement toolchain
 
-- **[WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)** —
-  quick manual ratio checks (any pairing).
-- **[Contrast by Shade](https://shade.contrast.app/)** — validate entire scales
-  at once for AA/AAA pass counts (incl. dark).
-- **[axe DevTools / axe-core](https://www.deque.com/axe/)** — automated checks
-  for focus, aria, contrast heuristics; wire into CI and storybook a11y addon.
-- **[Lighthouse](https://developer.chrome.com/docs/lighthouse/overview)** —
-  periodic top-level audit (color-contrast category).
-- **[Stark](https://www.getstark.co/)** — Figma plugin for design-time checks.
-- **[Accessible Palette](https://toolness.github.io/accessible-color-math/)** —
-  generate accessible tints/shades from a base hue.
-- **[WCAG 2.2 QuickRef](https://www.w3.org/WAI/WCAG22/quickref/)** — the normative
-  reference for 1.4.3, 1.4.11, 2.5.8.
+- **[axe-core](https://www.deque.com/axe/)** — the single automated check:
+  focus, aria and contrast heuristics, run in CI (via `@axe-core/cli`,
+  `jest-axe`, Playwright or the Storybook a11y addon) and in DevTools for local
+  debugging. Contrast math follows WCAG 2.2 (1.4.3 / 1.4.11).
 
 ### CI/commit gate
 
