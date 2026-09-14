@@ -1,3 +1,10 @@
 #!/usr/bin/env sh
-cd frontend
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT/frontend"
 npx lint-staged
+
+# Gitleaks secret scan (skip if the binary is not installed)
+if command -v gitleaks >/dev/null 2>&1; then
+  cd "$ROOT"
+  gitleaks git --staged --redact -c .gitleaks.toml
+fi
