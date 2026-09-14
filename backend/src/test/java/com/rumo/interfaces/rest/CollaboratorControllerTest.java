@@ -21,6 +21,7 @@ import com.rumo.application.collaborator.dto.CollaboratorRequest;
 import com.rumo.application.collaborator.dto.CollaboratorResponse;
 import com.rumo.application.collaborator.dto.CollaboratorUpdateRequest;
 import com.rumo.domain.collaborator.CollaboratorNotFoundException;
+import com.rumo.domain.company.CompanyNotFoundException;
 import com.rumo.interfaces.security.SecurityConfig;
 import com.rumo.interfaces.security.TestJwtDecoderConfig;
 import com.rumo.interfaces.security.TestTokens;
@@ -158,6 +159,27 @@ class CollaboratorControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].name").value("Alice"))
         .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void shouldReturn400WhenCompanyIdMissingOnList() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/collaborators")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "collaborator:read")))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturn404WhenCompanyNotFoundOnList() throws Exception {
+    when(listCollaboratorsUseCase.execute(99L, 0, 20)).thenThrow(new CompanyNotFoundException(99L));
+
+    mockMvc
+        .perform(
+            get("/api/v1/collaborators")
+                .param("companyId", "99")
+                .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "collaborator:read")))
+        .andExpect(status().isNotFound());
   }
 
   @Test

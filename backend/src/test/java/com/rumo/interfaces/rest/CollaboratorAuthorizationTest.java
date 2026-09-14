@@ -93,11 +93,12 @@ class CollaboratorAuthorizationTest {
   @Test
   void shouldAllowReadForCollaboratorReader() throws Exception {
     CollaboratorPage page = new CollaboratorPage(List.of(), 0, 20, 0, 0);
-    when(listCollaboratorsUseCase.execute(null, 0, 20)).thenReturn(page);
+    when(listCollaboratorsUseCase.execute(1L, 0, 20)).thenReturn(page);
 
     mockMvc
         .perform(
             get("/api/v1/collaborators")
+                .param("companyId", "1")
                 .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "collaborator:read")))
         .andExpect(status().isOk());
   }
@@ -107,6 +108,7 @@ class CollaboratorAuthorizationTest {
     mockMvc
         .perform(
             get("/api/v1/collaborators")
+                .param("companyId", "1")
                 .header(
                     HttpHeaders.AUTHORIZATION, TestTokens.bearer("user", "collaborator:create")))
         .andExpect(status().isForbidden());
@@ -117,6 +119,7 @@ class CollaboratorAuthorizationTest {
     mockMvc
         .perform(
             get("/api/v1/collaborators")
+                .param("companyId", "1")
                 .header(HttpHeaders.AUTHORIZATION, TestTokens.bearer("user")))
         .andExpect(status().isForbidden());
   }

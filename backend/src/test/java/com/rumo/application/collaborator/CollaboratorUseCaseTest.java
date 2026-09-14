@@ -95,10 +95,12 @@ class CollaboratorUseCaseTest {
     c1.setId(1L);
     Collaborator c2 = Collaborator.create("Bob", "b@rumoo.com", 1L, null);
     c2.setId(2L);
+    when(companyRepository.findById(1L)).thenReturn(Optional.of(activeCompany()));
     when(collaboratorRepository.countByCompanyId(1L)).thenReturn(2L);
     when(collaboratorRepository.findAllByCompanyId(1L, 0, 20)).thenReturn(List.of(c1, c2));
 
-    ListCollaboratorsUseCase useCase = new ListCollaboratorsUseCase(collaboratorRepository);
+    ListCollaboratorsUseCase useCase =
+        new ListCollaboratorsUseCase(collaboratorRepository, companyRepository);
     CollaboratorPage page = useCase.execute(1L, 0, 20);
 
     assertThat(page.content()).hasSize(2);
@@ -107,17 +109,14 @@ class CollaboratorUseCaseTest {
   }
 
   @Test
-  void shouldListAllWhenNoCompanyFilter() {
-    Collaborator c1 = Collaborator.create("Alice", "a@rumoo.com", 1L, null);
-    c1.setId(1L);
-    when(collaboratorRepository.count()).thenReturn(1L);
-    when(collaboratorRepository.findAll(0, 20)).thenReturn(List.of(c1));
+  void shouldThrowWhenCompanyNotFoundOnList() {
+    when(companyRepository.findById(99L)).thenReturn(Optional.empty());
 
-    ListCollaboratorsUseCase useCase = new ListCollaboratorsUseCase(collaboratorRepository);
-    CollaboratorPage page = useCase.execute(null, 0, 20);
-
-    assertThat(page.content()).hasSize(1);
-    assertThat(page.totalElements()).isEqualTo(1);
+    ListCollaboratorsUseCase useCase =
+        new ListCollaboratorsUseCase(collaboratorRepository, companyRepository);
+    assertThatThrownBy(() -> useCase.execute(99L, 0, 20))
+        .isInstanceOf(CompanyNotFoundException.class)
+        .hasMessageContaining("99");
   }
 
   @Test

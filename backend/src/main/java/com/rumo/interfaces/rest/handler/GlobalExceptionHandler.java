@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -45,6 +46,13 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ErrorResponse> handleBadRequest(HttpMessageNotReadableException ex) {
     return buildResponse(HttpStatus.BAD_REQUEST, "Invalid request body");
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ErrorResponse> handleMissingParam(
+      MissingServletRequestParameterException ex) {
+    return buildResponse(
+        HttpStatus.BAD_REQUEST, "Required request parameter is missing: " + ex.getParameterName());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

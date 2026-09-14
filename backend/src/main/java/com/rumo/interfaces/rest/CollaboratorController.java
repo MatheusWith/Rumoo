@@ -64,7 +64,7 @@ public class CollaboratorController {
   @GetMapping
   @PreAuthorize("hasAuthority('collaborator:read')")
   public ResponseEntity<CollaboratorPage> findAll(
-      @RequestParam(required = false) Long companyId,
+      @RequestParam Long companyId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
     CollaboratorPage response = listCollaboratorsUseCase.execute(companyId, page, size);
