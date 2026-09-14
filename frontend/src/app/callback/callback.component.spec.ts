@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { AuthService } from '../core/auth/auth.service';
 import { CallbackComponent } from './callback.component';
+import { expectAccessible } from '../../testing/a11y';
 
 @Component({ selector: 'app-dummy', template: '', imports: [] })
 class DummyComponent {}
@@ -44,6 +45,15 @@ describe('CallbackComponent', () => {
     await harness.fixture.whenStable();
 
     expect(harness.routeNativeElement?.textContent).toContain('Sign-in failed');
+  });
+
+  it('should be accessible in the error state', async () => {
+    authMock.completeLogin.and.returnValue(Promise.reject(new Error('invalid_grant')));
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/callback?code=abc&state=xyz');
+    await harness.fixture.whenStable();
+
+    await expectAccessible(harness.routeNativeElement as HTMLElement);
   });
 
   it('should show an error when the callback is missing the authorization code', async () => {

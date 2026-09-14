@@ -2,6 +2,7 @@ import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from './core/auth/auth.service';
 import { AppComponent } from './app.component';
+import { expectAccessible } from '../testing/a11y';
 
 describe('AppComponent', () => {
   const authMock = {
@@ -27,6 +28,12 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
+  });
+
+  it('should be accessible', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    await expectAccessible(fixture.nativeElement as HTMLElement);
   });
 
   it('should show sign out when authenticated', () => {
