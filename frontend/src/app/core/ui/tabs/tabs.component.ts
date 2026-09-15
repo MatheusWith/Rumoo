@@ -11,14 +11,17 @@ import { Component, input } from '@angular/core';
   host: { '(keydown.arrowRight)': 'onKeyDown($event)', '(keydown.arrowLeft)': 'onKeyDown($event)' },
 })
 export class UiTabsComponent {
-  onKeyDown(event: KeyboardEvent) {
+  onKeyDown(event: Event) {
+    const keyboard = event as KeyboardEvent;
     const tabs = (event.target as HTMLElement)
       .closest('[role="tablist"]')
       ?.querySelectorAll<HTMLElement>('[role="tab"]');
     if (!tabs?.length) return;
     const idx = Array.from(tabs).indexOf(event.target as HTMLElement);
     const next =
-      event.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+      keyboard.key === 'ArrowRight'
+        ? (idx + 1) % tabs.length
+        : (idx - 1 + tabs.length) % tabs.length;
     tabs[next].focus();
     tabs[next].click();
   }

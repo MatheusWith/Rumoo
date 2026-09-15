@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { NgIcon } from '@ng-icons/core';
 import { RouterLink } from '@angular/router';
 import { UiButtonComponent } from '../core/ui/button/button.component';
 import { UiIconButtonComponent } from '../core/ui/icon-button/icon-button.component';
@@ -48,7 +47,6 @@ import { DemoSectionComponent } from './demo-section.component';
   standalone: true,
   imports: [
     RouterLink,
-    NgIcon,
     DemoSectionComponent,
     UiButtonComponent,
     UiIconButtonComponent,
