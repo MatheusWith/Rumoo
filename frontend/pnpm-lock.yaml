@@ -60,6 +60,12 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.9.1(jiti@2.7.0))
+      '@ng-icons/core':
+        specifier: 36.0.0
+        version: 36.0.0(@angular-devkit/schematics@22.1.7(chokidar@5.0.0))(@angular/common@22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0))(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(@schematics/angular@22.1.7(chokidar@5.0.0))(rxjs@7.8.0)
+      '@ng-icons/lucide':
+        specifier: 36.0.0
+        version: 36.0.0(@ng-icons/core@36.0.0(@angular-devkit/schematics@22.1.7(chokidar@5.0.0))(@angular/common@22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0))(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(@schematics/angular@22.1.7(chokidar@5.0.0))(rxjs@7.8.0))
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -1675,6 +1681,20 @@ packages:
     peerDependencies:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
+
+  '@ng-icons/core@36.0.0':
+    resolution: {integrity: sha512-u4BxD2MTeZNbugAHQcUrG2lhOFDmfbiZwqvxA2uABHrYQmTG1xjnTe7kivJJ/Cl2MfTy8U8aIL3u0eryaPavCA==}
+    peerDependencies:
+      '@angular-devkit/schematics': '>=22.0.0'
+      '@angular/common': '>=22.0.0'
+      '@angular/core': '>=22.0.0'
+      '@schematics/angular': '>=22.0.0'
+      rxjs: ^6.5.3 || ^7.4.0
+
+  '@ng-icons/lucide@36.0.0':
+    resolution: {integrity: sha512-fxZ8nOyUAhD3Ty6IM02h3kgVfCQ09NbyJkoS2BiaPd1BnU3oCX90RfbmJYkOBSJc/1gl0IkA7CTR0Xmi/g0zvg==}
+    peerDependencies:
+      '@ng-icons/core': ^36.0.0
 
   '@ngtools/webpack@22.1.7':
     resolution: {integrity: sha512-1cqXgu5DnINuZ1pJ4ZsiyLOFDXzEGkKNdMcBuQ73WVXRhE8CwN0bdHyjEW+gOff2QXAsB2uulk7e3XO52QCA3w==}
@@ -6893,6 +6913,20 @@ snapshots:
       '@emnapi/runtime': 1.11.2
       '@tybys/wasm-util': 0.10.3
     optional: true
+
+  '@ng-icons/core@36.0.0(@angular-devkit/schematics@22.1.7(chokidar@5.0.0))(@angular/common@22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0))(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(@schematics/angular@22.1.7(chokidar@5.0.0))(rxjs@7.8.0)':
+    dependencies:
+      '@angular-devkit/schematics': 22.1.7(chokidar@5.0.0)
+      '@angular/common': 22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0)
+      '@angular/core': 22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3)
+      '@schematics/angular': 22.1.7(chokidar@5.0.0)
+      rxjs: 7.8.0
+      tslib: 2.3.0
+
+  '@ng-icons/lucide@36.0.0(@ng-icons/core@36.0.0(@angular-devkit/schematics@22.1.7(chokidar@5.0.0))(@angular/common@22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0))(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(@schematics/angular@22.1.7(chokidar@5.0.0))(rxjs@7.8.0))':
+    dependencies:
+      '@ng-icons/core': 36.0.0(@angular-devkit/schematics@22.1.7(chokidar@5.0.0))(@angular/common@22.1.5(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(rxjs@7.8.0))(@angular/core@22.1.5(@angular/compiler@22.1.5)(rxjs@7.8.0)(zone.js@0.16.3))(@schematics/angular@22.1.7(chokidar@5.0.0))(rxjs@7.8.0)
+      tslib: 2.3.0
 
   '@ngtools/webpack@22.1.7(@angular/compiler-cli@22.1.5(@angular/compiler@22.1.5)(typescript@6.0.2))(typescript@6.0.2)(webpack@5.109.2(esbuild@0.28.2)(postcss@8.5.25))':
     dependencies:
