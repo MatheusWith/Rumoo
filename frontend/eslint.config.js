@@ -38,10 +38,7 @@ module.exports = tseslint.config(
       ],
       'prettier/prettier': 'error',
       complexity: ['error', { max: 10 }],
-      'max-lines-per-function': [
-        'error',
-        { max: 30, skipBlankLines: true, skipComments: true },
-      ],
+      'max-lines-per-function': ['error', { max: 30, skipBlankLines: true, skipComments: true }],
     },
   },
   {
@@ -52,10 +49,37 @@ module.exports = tseslint.config(
   },
   {
     files: ['**/*.html'],
-    extends: [
-      ...angular.configs.templateRecommended,
-      ...angular.configs.templateAccessibility,
-    ],
+    extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
     rules: {},
   },
+  {
+    // Design-system library: components use the `ui` prefix by design.
+    files: ['src/app/core/ui/**/*.ts'],
+    rules: {
+      'max-lines-per-function': 'off',
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'ui',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  },
+  {
+    // List components intentionally host on native <ul>/<li> for semantic HTML.
+    files: ['src/app/core/ui/list/**/*.ts'],
+    rules: {
+      '@angular-eslint/component-selector': 'off',
+    },
+  },
+  {
+    // Test host components in specs keep the app prefix (they are not library APIs).
+    files: ['src/app/core/ui/**/*.spec.ts'],
+    rules: {
+      '@angular-eslint/component-selector': 'off',
+      'max-lines-per-function': 'off',
+    },
+  }
 );
