@@ -19,7 +19,7 @@ import { Component, input, output } from '@angular/core';
     >
       <span
         class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow ring-0 transition-transform duration-fast"
-        [class.translate-x-4]="checked()"
+        [class.translate-x-5]="checked()"
         [class.translate-x-1]="!checked()"
       ></span>
     </button>
