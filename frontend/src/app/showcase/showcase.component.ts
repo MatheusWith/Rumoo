@@ -93,6 +93,18 @@ export class ShowcaseComponent {
   theme = signal<'light' | 'dark'>('light');
   density = signal<'comfortable' | 'compact'>('comfortable');
 
+  // ---- Data table demo state ----
+  items = signal([
+    { id: 1, name: 'Alice Alves', role: 'Leader', progress: 72 },
+    { id: 2, name: 'Bruno Barros', role: 'Member', progress: 45 },
+    { id: 3, name: 'Carol Castro', role: 'Member', progress: 60 },
+    { id: 4, name: 'Daniel Dias', role: 'Leader', progress: 88 },
+    { id: 5, name: 'Elisa Almeida', role: 'Member', progress: 30 },
+  ]);
+  sortKey = signal<'name' | 'progress'>('name');
+  sortDir = signal<'none' | 'asc' | 'desc'>('none');
+  selected = signal<number[]>([]);
+
   setTheme(theme: 'light' | 'dark') {
     this.theme.set(theme);
     document.documentElement.dataset['theme'] = theme;
@@ -101,5 +113,40 @@ export class ShowcaseComponent {
   setDensity(density: 'comfortable' | 'compact') {
     this.density.set(density);
     document.documentElement.dataset['density'] = density;
+  }
+
+  toggleSort(key: 'name' | 'progress') {
+    if (this.sortKey() !== key || this.sortDir() === 'none') {
+      this.sortKey.set(key);
+      this.sortDir.set('asc');
+    } else if (this.sortDir() === 'asc') {
+      this.sortDir.set('desc');
+    } else {
+      this.sortDir.set('none');
+    }
+  }
+
+  sortedItems() {
+    const dir = this.sortDir();
+    if (dir === 'none') return this.items();
+    const key = this.sortKey();
+    const items = [...this.items()];
+    items.sort((a, b) => {
+      const av = key === 'name' ? a.name : a.progress;
+      const bv = key === 'name' ? b.name : b.progress;
+      if (typeof av === 'string') {
+        return dir === 'asc' ? av.localeCompare(bv as string) : (bv as string).localeCompare(av);
+      }
+      return dir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+    return items;
+  }
+
+  isSelected(id: number) {
+    return this.selected().includes(id);
+  }
+
+  toggleSelect(id: number) {
+    this.selected.update((sel) => (sel.includes(id) ? sel.filter((s) => s !== id) : [...sel, id]));
   }
 }

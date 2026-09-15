@@ -310,6 +310,8 @@
           <ui-button (click)="defaultModal.open()">Open modal</ui-button>
           <ui-button variant="danger" (click)="confirmModal.open()">Confirm delete</ui-button>
           <ui-button variant="secondary" (click)="largeModal.open()">Large modal</ui-button>
+          <ui-button variant="secondary" (click)="topModal.open()">Top-aligned</ui-button>
+          <ui-button variant="secondary" (click)="lightboxModal.open()">Non-modal</ui-button>
         </div>
 
         <ui-modal #defaultModal title="Add activity">
@@ -338,6 +340,24 @@
           </p>
           <div class="flex justify-end gap-2">
             <ui-button variant="secondary" (click)="largeModal.close()">Close</ui-button>
+          </div>
+        </ui-modal>
+
+        <ui-modal #topModal position="top" title="Command">
+          <p class="mb-4 text-body text-text-secondary">
+            Top-aligned dialogs keep context visible (position="top").
+          </p>
+          <div class="flex justify-end gap-2">
+            <ui-button (click)="topModal.close()">Got it</ui-button>
+          </div>
+        </ui-modal>
+
+        <ui-modal #lightboxModal [modal]="false" size="sm" title="Quick tip">
+          <p class="mb-4 text-body text-text-secondary">
+            Non-modal dialog: the background stays interactive (modal="false").
+          </p>
+          <div class="flex justify-end gap-2">
+            <ui-button variant="secondary" (click)="lightboxModal.close()">Dismiss</ui-button>
           </div>
         </ui-modal>
       </app-demo-section>
@@ -460,6 +480,62 @@
         >
           <ui-button>Create activity</ui-button>
         </ui-empty-state>
+      </app-demo-section>
+
+      <app-demo-section label="Data table — sort, select, actions" [fullWidth]="true">
+        <ui-table [bordered]="true">
+          <ui-table-head>
+            <ui-th></ui-th>
+            <ui-th
+              [sortable]="true"
+              [sortDirection]="sortKey() === 'name' ? sortDir() : 'none'"
+              (sort)="toggleSort('name')"
+            >
+              Name
+            </ui-th>
+            <ui-th>Role</ui-th>
+            <ui-th
+              [sortable]="true"
+              [sortDirection]="sortKey() === 'progress' ? sortDir() : 'none'"
+              (sort)="toggleSort('progress')"
+            >
+              Progress
+            </ui-th>
+            <ui-th>Actions</ui-th>
+          </ui-table-head>
+          <ui-table-body>
+            @for (item of sortedItems(); track item.id) {
+              <ui-table-row>
+                <ui-td>
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(item.id)"
+                    (change)="toggleSelect(item.id)"
+                    class="h-4 w-4 rounded-sm border border-border text-primary focus:ring-2 focus:ring-primary-accent"
+                    [attr.aria-label]="'Select ' + item.name"
+                  />
+                </ui-td>
+                <ui-td>{{ item.name }}</ui-td>
+                <ui-td>
+                  <ui-group-role-badge [kind]="item.role === 'Leader' ? 'leader' : 'member'" />
+                </ui-td>
+                <ui-td>
+                  <span class="tabular-nums">{{ item.progress }}%</span>
+                </ui-td>
+                <ui-td>
+                  <div class="flex gap-1">
+                    <ui-icon-button icon="lucide-pencil" label="Edit {{ item.name }}" />
+                    <ui-icon-button icon="lucide-more-vertical" label="More actions" />
+                  </div>
+                </ui-td>
+              </ui-table-row>
+            }
+          </ui-table-body>
+        </ui-table>
+        <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p class="text-body-s text-text-secondary">{{ selected().length }} selected</p>
+          <ui-pagination [page]="1" [total]="1" />
+        </div>
       </app-demo-section>
     </div>
   </section>
