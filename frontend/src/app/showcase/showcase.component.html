@@ -1,13 +1,19 @@
-<header class="flex items-center justify-between gap-4 border-b border-border bg-surface px-6 py-4">
+<!-- Header — mobile-first: wraps on small screens -->
+<header
+  class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-6 py-3 sm:py-4"
+>
   <div class="flex items-center gap-4">
-    <h1 class="text-heading-l font-semibold text-text-primary">Design System</h1>
+    <h1 class="text-heading-s sm:text-heading-l font-semibold text-text-primary">Design System</h1>
     <nav class="flex gap-2">
-      <a routerLink="/dashboard" class="text-body text-text-secondary hover:text-text-primary">
+      <a
+        routerLink="/dashboard"
+        class="text-body text-text-secondary hover:text-text-primary transition-colors"
+      >
         Dashboard
       </a>
     </nav>
   </div>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-3 flex-wrap">
     <span class="text-body-s text-text-secondary">Theme</span>
     <ui-toggle
       label="Dark theme"
@@ -23,10 +29,203 @@
   </div>
 </header>
 
-<main class="mx-auto max-w-6xl px-6 py-8 space-y-12">
+<main class="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-10 sm:space-y-12">
+  <!-- ====== Section 1: Responsive sizing (mobile-first) ====== -->
+  <section class="space-y-3">
+    <h2 class="text-heading-m font-semibold text-text-primary">Responsive sizing</h2>
+    <p class="text-body text-text-secondary mb-4">
+      Components adapt from mobile (compact) to desktop. Switch density toggle above to see both
+      modes live.
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <!-- Button sizes -->
+      <app-demo-section label="Button sizes">
+        <div class="space-y-3">
+          <p class="caption text-text-tertiary">32px (sm) → 40px (md) → 48px (lg)</p>
+          <div class="flex items-center gap-3">
+            <ui-button size="sm">Small</ui-button>
+            <ui-button size="md">Medium</ui-button>
+            <ui-button size="lg">Large</ui-button>
+          </div>
+        </div>
+      </app-demo-section>
+
+      <!-- Card density -->
+      <app-demo-section label="Card density">
+        <p class="caption text-text-tertiary mb-2">Comfortable (20px padding) ↔ Compact (12px)</p>
+        <div class="space-y-3">
+          <ui-card title="Comfortable">
+            <p class="text-body-s text-text-secondary">More breathing room.</p>
+          </ui-card>
+          <ui-card title="Compact" [padding]="'compact'">
+            <p class="text-body-s text-text-secondary">Dense mode for data-heavy views.</p>
+          </ui-card>
+        </div>
+      </app-demo-section>
+
+      <!-- Input widths -->
+      <app-demo-section label="Input widths">
+        <div class="space-y-3">
+          <ui-input label="Full width (default)" type="text" placeholder="Full width" />
+          <div class="w-3/4">
+            <ui-input label="75% width" type="text" placeholder="Three quarters" />
+          </div>
+          <div class="w-1/2">
+            <ui-input label="50% width" type="text" placeholder="Half" />
+          </div>
+        </div>
+      </app-demo-section>
+
+      <!-- Row heights -->
+      <app-demo-section label="List row heights">
+        <p class="caption text-text-tertiary mb-2">40px (comfortable) ↔ 32px (compact)</p>
+        <ul ui-list>
+          <li ui-list-row>Standard row — 40px comfortable</li>
+          <li ui-list-row>Compact row — tighter spacing</li>
+        </ul>
+      </app-demo-section>
+
+      <!-- Avatar sizes -->
+      <app-demo-section label="Avatar sizes">
+        <div class="flex items-center gap-4">
+          <ui-avatar name="Small" [size]="24" />
+          <span class="text-caption text-text-tertiary">24px</span>
+          <ui-avatar name="Default" [online]="true" [size]="32" />
+          <span class="text-caption text-text-tertiary">32px (with presence dot)</span>
+        </div>
+      </app-demo-section>
+
+      <!-- Responsive container example -->
+      <app-demo-section label="Container behavior">
+        <p class="caption text-text-tertiary mb-2">The showcase itself is responsive:</p>
+        <div class="text-body text-text-primary space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded bg-primary"></span>
+            <span>Mobile (0→640px): 1 column</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded bg-primary-accent"></span>
+            <span>sm (640px+): 2 columns</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded bg-success-solid"></span>
+            <span>lg (1024px+): 3 columns</span>
+          </div>
+        </div>
+      </app-demo-section>
+    </div>
+  </section>
+
+  <!-- ====== Section 2: Mouse interactions ====== -->
+  <section class="space-y-3">
+    <h2 class="text-heading-m font-semibold text-text-primary">Mouse interactions</h2>
+    <p class="text-body text-text-secondary mb-4">
+      Every interactive element communicates hover, active and focus states.
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <!-- Button hover states -->
+      <app-demo-section label="Button states">
+        <p class="caption text-text-tertiary mb-2">
+          Hover over each variant to see the state change.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <ui-button>Primary — hover me</ui-button>
+          <ui-button variant="secondary">Secondary</ui-button>
+          <ui-button variant="tertiary">Tertiary</ui-button>
+          <ui-button variant="danger">Danger</ui-button>
+        </div>
+        <p class="caption text-text-tertiary mt-2">
+          States: default → hover (darker/fill) → active (inset) → focus (2px ring) → disabled
+          (faded)
+        </p>
+      </app-demo-section>
+
+      <!-- Card hover -->
+      <app-demo-section label="Card hover">
+        <p class="caption text-text-tertiary mb-2">Interactive cards lift shadow on hover.</p>
+        <div class="space-y-3">
+          <ui-card title="Static card" class="transition-shadow">
+            <p class="text-body-s text-text-secondary">No hover effect — standard card.</p>
+          </ui-card>
+          <ui-card title="Hoverable card" [interactive]="true">
+            <p class="text-body-s text-text-secondary">Hover me → shadow lifts.</p>
+          </ui-card>
+        </div>
+      </app-demo-section>
+
+      <!-- Input focus states -->
+      <app-demo-section label="Input focus ring">
+        <p class="caption text-text-tertiary mb-2">
+          Focus each input to see the 2px primary-accent ring.
+        </p>
+        <div class="space-y-3">
+          <ui-input label="Name" type="text" placeholder="Click to focus" />
+          <ui-textarea label="Notes" placeholder="Click to focus" />
+          <ui-toggle label="Focus toggle" />
+        </div>
+      </app-demo-section>
+
+      <!-- Table row hover -->
+      <app-demo-section label="Table row hover">
+        <p class="caption text-text-tertiary mb-2">Rows reveal hover background.</p>
+        <ui-table>
+          <ui-table-head>
+            <ui-th>Name</ui-th>
+            <ui-th>Score</ui-th>
+          </ui-table-head>
+          <ui-table-body>
+            <ui-table-row><ui-td>Alice Alves</ui-td><ui-td>92</ui-td></ui-table-row>
+            <ui-table-row><ui-td>Bruno Barros</ui-td><ui-td>85</ui-td></ui-table-row>
+            <ui-table-row><ui-td>Carol Castro</ui-td><ui-td>78</ui-td></ui-table-row>
+          </ui-table-body>
+        </ui-table>
+      </app-demo-section>
+
+      <!-- Badge hover + tooltip combo -->
+      <app-demo-section label="Badge hover & tooltip">
+        <p class="caption text-text-tertiary mb-2">Badges are static; tooltip hover for context.</p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <ui-tooltip text="This badge shows completion status">
+            <ui-badge variant="success">Completed</ui-badge>
+          </ui-tooltip>
+          <ui-tooltip text="Work in progress, not blocked">
+            <ui-badge variant="warning">In Progress</ui-badge>
+          </ui-tooltip>
+          <ui-tooltip text="Needs attention from a manager">
+            <ui-badge variant="danger">Blocked</ui-badge>
+          </ui-tooltip>
+        </div>
+        <div class="flex gap-2">
+          <ui-tooltip text="Alice leads this group">
+            <ui-group-role-badge kind="leader" />
+          </ui-tooltip>
+          <ui-tooltip text="Bruno is a team member">
+            <ui-group-role-badge kind="member" />
+          </ui-tooltip>
+        </div>
+      </app-demo-section>
+
+      <!-- Toggle / checkbox / radio states -->
+      <app-demo-section label="Selection states">
+        <p class="caption text-text-tertiary mb-2">
+          All selections show visual state changes on click.
+        </p>
+        <div class="space-y-3">
+          <ui-checkbox>Enable notifications</ui-checkbox>
+          <ui-radio>Light theme</ui-radio>
+          <ui-radio>Dark theme</ui-radio>
+          <ui-toggle label="A11y announcements" />
+        </div>
+      </app-demo-section>
+    </div>
+  </section>
+
+  <!-- ====== Section 3: Actions & forms ====== -->
   <section class="space-y-3">
     <h2 class="text-heading-m font-semibold text-text-primary">Actions & forms</h2>
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <app-demo-section label="Buttons">
         <div class="flex flex-wrap gap-3">
           <ui-button>Primary</ui-button>
@@ -73,9 +272,10 @@
     </div>
   </section>
 
+  <!-- ====== Section 4: Surfaces & feedback ====== -->
   <section class="space-y-3">
     <h2 class="text-heading-m font-semibold text-text-primary">Surfaces & feedback</h2>
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <app-demo-section label="Cards">
         <ui-card title="Progress this week" class="mb-3">
           <p class="text-body text-text-secondary">Two activities completed.</p>
@@ -130,9 +330,10 @@
     </div>
   </section>
 
+  <!-- ====== Section 5: Data display ====== -->
   <section class="space-y-3">
     <h2 class="text-heading-m font-semibold text-text-primary">Data display</h2>
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <app-demo-section label="List">
         <ul ui-list>
           <li ui-list-row>Plan Q3 goals</li>
@@ -175,9 +376,10 @@
     </div>
   </section>
 
+  <!-- ====== Section 6: Navigation & productivity ====== -->
   <section class="space-y-3">
     <h2 class="text-heading-m font-semibold text-text-primary">Navigation & productivity</h2>
-    <div class="grid grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <app-demo-section label="Tabs">
         <ui-tabs>
           <ui-tab [active]="true">List</ui-tab>
