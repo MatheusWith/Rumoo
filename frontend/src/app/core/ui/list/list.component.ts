@@ -17,7 +17,7 @@ export class UiListComponent {
   template: `<ng-content />`,
   host: {
     class:
-      'flex items-center gap-3 px-3 transition-colors duration-fast hover:bg-primary-subtle focus-within:bg-primary-subtle',
+      'flex items-center gap-3 px-3 ui-compact:px-2 h-10 ui-compact:h-8 transition-colors duration-fast hover:bg-primary-subtle focus-within:bg-primary-subtle',
   },
   standalone: true,
 })

@@ -7,7 +7,7 @@ import { Component, input } from '@angular/core';
       [class]="
         'rounded-lg bg-surface border border-border shadow-sm transition-shadow' +
         (interactive() ? ' hover:shadow-md cursor-pointer' : '') +
-        (padding() === 'comfortable' ? ' p-5' : ' p-3')
+        (padding() === 'comfortable' ? ' p-5 ui-compact:p-3' : ' p-3 ui-compact:p-2')
       "
     >
       @if (title()) {

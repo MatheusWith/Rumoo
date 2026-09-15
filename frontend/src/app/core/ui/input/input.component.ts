@@ -11,7 +11,7 @@ import { Component, input } from '@angular/core';
       [placeholder]="placeholder()"
       [disabled]="disabled()"
       [attr.aria-label]="label() ? null : placeholder()"
-      [class]="'w-full rounded-md border bg-field px-3 py-2 text-body text-text-primary
+      [class]="'w-full rounded-md border bg-field px-3 ui-compact:px-2 py-2 ui-compact:py-1 text-body text-text-primary
          placeholder:text-text-tertiary border-border
          focus:outline-none focus:ring-2 focus:ring-primary-accent
          disabled:opacity-50 disabled:bg-background disabled:cursor-not-allowed'"

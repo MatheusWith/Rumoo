@@ -179,3 +179,20 @@ body {
     background-position: 200% 0;
   }
 }
+
+/* ---- Density variant: applies ui-compact:* when the root is compact ---- */
+@custom-variant ui-compact (&:where([data-density='compact'], [data-density='compact'] *));
+
+/* ---- Table style variants (consumed by ui-table) ---- */
+@utility ui-table-striped {
+  tbody > tr:nth-child(even) {
+    background-color: var(--color-background);
+  }
+}
+
+@utility ui-table-bordered {
+  th,
+  td {
+    border: 1px solid var(--color-border);
+  }
+}
