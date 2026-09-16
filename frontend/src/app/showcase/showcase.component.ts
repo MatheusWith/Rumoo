@@ -39,6 +39,7 @@ import { UiFiltersComponent, UiFilterChipComponent } from '../core/ui/filters/fi
 import { UiViewsSwitcherComponent } from '../core/ui/views-switcher/views-switcher.component';
 import { UiCommandPaletteComponent } from '../core/ui/command-palette/command-palette.component';
 import { UiAvatarComponent } from '../core/ui/avatar/avatar.component';
+import { UiPageHeaderComponent } from '../core/ui/page-header/page-header.component';
 import { DemoSectionComponent } from './demo-section.component';
 
 @Component({
@@ -87,6 +88,7 @@ import { DemoSectionComponent } from './demo-section.component';
     UiViewsSwitcherComponent,
     UiCommandPaletteComponent,
     UiAvatarComponent,
+    UiPageHeaderComponent,
   ],
 })
 export class ShowcaseComponent {
@@ -148,5 +150,37 @@ export class ShowcaseComponent {
 
   toggleSelect(id: number) {
     this.selected.update((sel) => (sel.includes(id) ? sel.filter((s) => s !== id) : [...sel, id]));
+  }
+
+  // ---- Flow patterns demo state ----
+  visibility = signal<'EMPRESA_INTEIRA' | 'TIME_ESPECIFICO' | 'PESSOAL'>('EMPRESA_INTEIRA');
+  demoStatus = signal<'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'BLOQUEADA'>('PENDENTE');
+  goals = signal([
+    { id: 1, title: 'Launch the mobile app', activities: 8, done: 6 },
+    { id: 2, title: 'Expand to the LATAM market', activities: 12, done: 4 },
+    { id: 3, title: 'Improve onboarding activation', activities: 6, done: 6 },
+  ]);
+  selectedGoal = signal<number | null>(null);
+
+  nextStatus() {
+    const order: Record<string, 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA'> = {
+      PENDENTE: 'EM_ANDAMENTO',
+      EM_ANDAMENTO: 'CONCLUIDA',
+      CONCLUIDA: 'PENDENTE',
+      BLOQUEADA: 'EM_ANDAMENTO',
+    };
+    this.demoStatus.set(order[this.demoStatus()]);
+  }
+
+  goalById(id: number) {
+    return this.goals().find((g) => g.id === id) ?? null;
+  }
+
+  onVisibilityChange(option: string) {
+    this.visibility.set(option as 'EMPRESA_INTEIRA' | 'TIME_ESPECIFICO' | 'PESSOAL');
+  }
+
+  progressPercent(goal: { done: number; activities: number }) {
+    return Math.round((goal.done / goal.activities) * 100);
   }
 }

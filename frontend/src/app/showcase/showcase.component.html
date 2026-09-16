@@ -30,6 +30,255 @@
 </header>
 
 <main class="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-10 sm:space-y-12">
+  <!-- ====== Section 0: Layout grids ====== -->
+  <section class="space-y-3">
+    <h2 class="text-heading-m font-semibold text-text-primary">Layout grids</h2>
+    <p class="text-body text-text-secondary mb-4">
+      Page container, 12-column grid and card grids — mobile-first (1 col → 12 col).
+    </p>
+
+    <div class="space-y-6">
+      <app-demo-section label="page-container" [fullWidth]="true">
+        <p class="caption text-text-tertiary mb-2">
+          Max-width 1280px, centered, with responsive gutters (16 → 24 → 32px).
+        </p>
+        <div
+          class="page-container rounded-md border border-dashed border-border bg-background py-4"
+        >
+          <p class="text-center text-body-s text-text-secondary">
+            content inside the container — resize the window to see the gutter steps
+          </p>
+        </div>
+      </app-demo-section>
+
+      <app-demo-section label="12-column page grid" [fullWidth]="true">
+        <p class="caption text-text-tertiary mb-2">
+          <code>grid grid-cols-12 gap-6</code> — spans collapse to 1 column on mobile.
+        </p>
+        <div class="grid grid-cols-12 gap-6">
+          <div
+            class="col-span-full lg:col-span-4 rounded-md bg-primary-subtle p-4 text-body-s text-text-primary"
+          >
+            4 cols (lg+)
+          </div>
+          <div
+            class="col-span-full lg:col-span-4 rounded-md bg-primary-subtle p-4 text-body-s text-text-primary"
+          >
+            4 cols (lg+)
+          </div>
+          <div
+            class="col-span-full lg:col-span-4 rounded-md bg-primary-subtle p-4 text-body-s text-text-primary"
+          >
+            4 cols (lg+)
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-12 gap-6">
+          <div
+            class="col-span-full sm:col-span-6 lg:col-span-3 rounded-md bg-secondary-subtle p-4 text-body-s text-text-primary"
+          >
+            3 cols (lg+) · 6 (sm)
+          </div>
+          <div
+            class="col-span-full sm:col-span-6 lg:col-span-3 rounded-md bg-secondary-subtle p-4 text-body-s text-text-primary"
+          >
+            3 cols (lg+) · 6 (sm)
+          </div>
+          <div
+            class="col-span-full sm:col-span-6 lg:col-span-3 rounded-md bg-secondary-subtle p-4 text-body-s text-text-primary"
+          >
+            3 cols (lg+) · 6 (sm)
+          </div>
+          <div
+            class="col-span-full sm:col-span-6 lg:col-span-3 rounded-md bg-secondary-subtle p-4 text-body-s text-text-primary"
+          >
+            3 cols (lg+) · 6 (sm)
+          </div>
+        </div>
+      </app-demo-section>
+
+      <app-demo-section label="card-grid vs card-grid-compact" [fullWidth]="true">
+        <p class="caption text-text-tertiary mb-2">
+          Dashboards: <code>card-grid</code> (min 280px). Dense: <code>card-grid-compact</code> (min
+          220px).
+        </p>
+        <div class="card-grid mb-6">
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <div class="rounded-md border border-border bg-surface p-4">
+              <p class="text-heading-s font-semibold text-text-primary">Metric {{ i }}</p>
+              <p class="mt-1 text-body-s text-text-secondary">auto-fill min 280px</p>
+            </div>
+          }
+        </div>
+        <div class="card-grid-compact">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="rounded-md border border-border bg-surface p-2">
+              <p class="text-body-s text-text-primary">Item {{ i }}</p>
+            </div>
+          }
+        </div>
+      </app-demo-section>
+    </div>
+  </section>
+
+  <!-- ====== Section: Flow patterns (click budgets) ====== -->
+  <section class="space-y-3">
+    <h2 class="text-heading-m font-semibold text-text-primary">Flow patterns</h2>
+    <p class="text-body text-text-secondary mb-4">
+      Compositions derived from <code>fluxo.md</code>, each with a click budget.
+    </p>
+
+    <!-- Quick create -->
+    <app-demo-section label="Quick Create — Goal" [fullWidth]="true">
+      <p class="caption text-text-tertiary mb-3">
+        Budget: ≤ 4 clicks to create (header → form → submit).
+      </p>
+      <ui-page-header title="Goals" subtitle="Strategic objectives tracked as activities">
+        <div page-actions>
+          <ui-button (click)="quickModal.open()">New goal</ui-button>
+        </div>
+      </ui-page-header>
+
+      <ui-modal #quickModal size="lg" title="New goal">
+        <div class="space-y-4">
+          <ui-input label="Goal title" type="text" placeholder="e.g. Launch the mobile app" />
+          <ui-textarea label="Description" placeholder="What does success look like?" />
+          <p class="text-body-s text-text-primary">Visibility</p>
+          <div class="flex flex-col gap-2">
+            <label class="inline-flex items-center gap-2 text-body text-text-primary">
+              <input type="radio" name="vis-quick" checked class="h-4 w-4 accent-current" />
+              Company-wide
+            </label>
+            <label class="inline-flex items-center gap-2 text-body text-text-primary">
+              <input type="radio" name="vis-quick" class="h-4 w-4" />
+              Specific group
+            </label>
+            <label class="inline-flex items-center gap-2 text-body text-text-primary">
+              <input type="radio" name="vis-quick" class="h-4 w-4" />
+              Personal
+            </label>
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end gap-2">
+          <ui-button variant="secondary" (click)="quickModal.close()">Cancel</ui-button>
+          <ui-button (click)="quickModal.close()">Create</ui-button>
+        </div>
+      </ui-modal>
+    </app-demo-section>
+
+    <!-- Visibility selector -->
+    <app-demo-section label="Visibility selector" [fullWidth]="true">
+      <p class="caption text-text-tertiary mb-3">
+        Scopes a goal/activity to company, group or person.
+      </p>
+      <div class="flex flex-col gap-2">
+        @for (option of ['EMPRESA_INTEIRA', 'TIME_ESPECIFICO', 'PESSOAL']; track option) {
+          <label class="inline-flex items-center gap-2 text-body text-text-primary">
+            <input
+              type="radio"
+              name="visibility"
+              [checked]="visibility() === option"
+              (change)="onVisibilityChange(option)"
+              class="h-4 w-4"
+            />
+            {{ option }}
+          </label>
+        }
+      </div>
+      @if (visibility() === 'TIME_ESPECIFICO') {
+        <div class="mt-3">
+          <ui-select label="Group">
+            <option>Marketing</option>
+            <option>Product</option>
+            <option>Engineering</option>
+          </ui-select>
+        </div>
+      } @else if (visibility() === 'PESSOAL') {
+        <div class="mt-3">
+          <ui-select label="Collaborator">
+            <option>Alice Alves</option>
+            <option>Bruno Barros</option>
+            <option>Carol Castro</option>
+          </ui-select>
+        </div>
+      }
+    </app-demo-section>
+
+    <!-- Inline status -->
+    <app-demo-section label="Inline status change" [fullWidth]="true">
+      <p class="caption text-text-tertiary mb-3">Budget: ≤ 2 clicks to change status.</p>
+      <div class="flex flex-wrap items-center gap-3">
+        <ui-badge
+          [variant]="
+            demoStatus() === 'CONCLUIDA'
+              ? 'success'
+              : demoStatus() === 'BLOQUEADA'
+                ? 'danger'
+                : demoStatus() === 'EM_ANDAMENTO'
+                  ? 'info'
+                  : 'neutral'
+          "
+        >
+          {{ demoStatus() }}
+        </ui-badge>
+        <ui-button variant="tertiary" (click)="nextStatus()">Advance status</ui-button>
+      </div>
+    </app-demo-section>
+
+    <!-- Master detail -->
+    <app-demo-section label="Master–detail drill-down" [fullWidth]="true">
+      <p class="caption text-text-tertiary mb-3">
+        Budget: 1 click to open a goal and see its activities.
+      </p>
+      <ul ui-list>
+        @for (goal of goals(); track goal.id) {
+          <li
+            ui-list-row
+            [selected]="selectedGoal() === goal.id"
+            (click)="selectedGoal.set(goal.id)"
+            (keydown.enter)="selectedGoal.set(goal.id)"
+            tabindex="0"
+          >
+            <span class="font-medium text-text-primary">{{ goal.title }}</span>
+            <span class="ml-auto text-text-secondary">
+              {{ goal.done }}/{{ goal.activities }} activities
+            </span>
+          </li>
+        }
+      </ul>
+      @if (selectedGoal() !== null; as id) {
+        @let goal = goalById(id);
+        @if (goal) {
+          <div class="mt-4 rounded-md border border-border bg-surface p-4">
+            <p class="text-heading-s font-semibold text-text-primary">{{ goal.title }}</p>
+            <p class="mt-1 text-body-s text-text-secondary">
+              Progress {{ goal.done }} of {{ goal.activities }} activities.
+            </p>
+            <div class="mt-2">
+              <ui-progress [value]="progressPercent(goal)" label="Goal progress" />
+            </div>
+          </div>
+        }
+      }
+    </app-demo-section>
+
+    <!-- Redemption ticket -->
+    <app-demo-section label="Redemption ticket" [fullWidth]="true">
+      <p class="caption text-text-tertiary mb-3">Budget: send ≤ 3 clicks · review ≤ 2 clicks.</p>
+      <ui-button variant="secondary" (click)="redemptionModal.open()">Request review</ui-button>
+
+      <ui-modal #redemptionModal size="sm" title="Request re-evaluation">
+        <p class="mb-3 text-body-s text-text-secondary">
+          Justify the incomplete activities of the closed Goal so the manager can re-assess.
+        </p>
+        <ui-textarea label="Justification" placeholder="Why should this be reconsidered?" />
+        <div class="mt-4 flex justify-end gap-2">
+          <ui-button variant="secondary" (click)="redemptionModal.close()">Cancel</ui-button>
+          <ui-button (click)="redemptionModal.close()">Send ticket</ui-button>
+        </div>
+      </ui-modal>
+    </app-demo-section>
+  </section>
+
   <!-- ====== Section 1: Responsive sizing (mobile-first) ====== -->
   <section class="space-y-3">
     <h2 class="text-heading-m font-semibold text-text-primary">Responsive sizing</h2>

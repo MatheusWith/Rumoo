@@ -10,16 +10,17 @@ Este documento apresenta a estrutura operacional, os fluxos e o modelo de domín
 
 - **Empresa (Company):** Organização que utiliza o sistema. Totalmente isolada de outras empresas.
 - **Pessoa (Collaborator):** Usuário cadastrado dentro de uma empresa. Pode estar **ativa** (recebe metas e atividades) ou **inativa** (histórico preservado, sem novas atribuições).
-- **Time (Team):** Agrupamento de pessoas dentro de uma empresa. Cada pessoa pertence a apenas um time por empresa. "Grupo" e "equipe" são sinônimos informais — usar apenas **Time**.
+- **Time (Team):** Agrupamento de pessoas dentro de uma empresa. Cada pessoa pode pertencer a **vários times (Groups)** por empresa, com papel de **Membro** ou **Líder** em cada. "Grupo" e "equipe" são sinônimos informais — usar apenas **Time**.
 - **Meta (Goal):** Objetivo estratégico com título, descrição, período de validade e pontuação. Pode ser visível para a empresa inteira, um time específico ou uma pessoa.
 - **Atividade (Activity):** Tarefa atribuída a uma pessoa ou time, vinculada opcionalmente a uma Meta. Cada atividade concluída soma pontos à meta vinculada.
 
 ### Relacionamentos
 
 - **Empresa** contém muitos **Times**
-- **Time** contém muitas **Pessoas** (1 pessoa = 1 time por empresa)
+- **Time** contém muitas **Pessoas**
+- **Pessoa** pertence a **uma Empresa** e pode estar em **vários Times** (Groups) simultaneamente, com papel de **Membro** ou **Líder** em cada um.
 - **Meta** pertence à **Empresa**, tem escopo de visibilidade, pode conter muitas **Atividades**
-- **Atividade** pertence à **Empresa**, pode estar vinculada a uma **Meta**, atribuída a uma **Pessoa** ou **Time**
+- **Atividade** pertence à **Empresa**, pode estar vinculada a uma **Meta**, atribuída a uma **Pessoa** ou a **vários Times/Groups**
 
 ### Termos-chave
 
@@ -44,7 +45,7 @@ Responsável por estruturar a empresa dentro do sistema antes de iniciar a opera
 
 * O gerente organiza os colaboradores em **times** (equipes ou departamentos).
 * É o momento de agrupar as pessoas que trabalharão juntas e definir quem lidera cada time.
-* Cada pessoa pode pertencer a apenas um time por empresa.
+* Cada pessoa pode pertencer a **vários times (Groups)** por empresa, com papel de **Membro** ou **Líder** em cada um.
 
 ### 1.3 Definição de Papéis e Permissões
 
